@@ -23,6 +23,11 @@
 #define PAR_MEDIA_CODE   2
 #define PAR_MEDIA_2LAY   3
 #define PAR_MEDIA_2GRD   4
+#define PAR_MEDIA_2BIN   5
+
+#define PAR_MEDIA_CMP_VELOCITY 1
+#define PAR_MEDIA_CMP_THOMSEN  2
+#define PAR_MEDIA_CMP_CIJ      3
 
 #define PAR_SOURCE_JSON  1
 #define PAR_SOURCE_FILE  3
@@ -37,6 +42,7 @@ typedef struct{
   //char source_dir   [PAR_MAX_STRLEN];
   //char station_dir  [PAR_MAX_STRLEN];
   //char log_file_name[PAR_MAX_STRLEN];
+  char tmp_dir[PAR_MAX_STRLEN];
 
   // time step
   int   number_of_time_steps;
@@ -45,7 +51,7 @@ typedef struct{
   int   time_end_index;
   float time_start;
   //float time_end  ;
-  float time_check_stability;
+  int time_check_stability;
   float time_window_length;
 
   // for each block
@@ -73,6 +79,11 @@ typedef struct{
   float cfspml_velocity[CONST_NDIM][2];
   int   bdry_has_cfspml;
 
+  // exp
+  int   ablexp_is_sides[CONST_NDIM][2];
+  float ablexp_velocity[CONST_NDIM][2];
+  int   bdry_has_ablexp;
+
   // free
   int   free_is_sides[CONST_NDIM][2];
   int   bdry_has_free;
@@ -98,51 +109,33 @@ typedef struct{
   char metric_import_dir[PAR_MAX_STRLEN];
 
   // medium
-  char media_type[PAR_MAX_STRLEN]; // elastic or acoustic
+  char media_type[PAR_MAX_STRLEN]; // iso, vti, or aniso
   int  media_itype; // iso, vti, or aniso
-//  char aniso_type[PAR_MAX_STRLEN];
-//  int  aniso_itype; // iso, vti, tti, or general
-  char visco_type[PAR_MAX_STRLEN]; // graves_Qs
-  int  visco_itype; // graves_Qs
+  char media_input_way[PAR_MAX_STRLEN]; // in_code, import, file
+  int  media_input_itype;
+  char media_input_cmptype[PAR_MAX_STRLEN]; // cij, thomson
+  int  media_input_icmptype;
 
-  int media_input_itype;
   int is_export_media;
   char equivalent_medium_method[PAR_MAX_STRLEN]; // For layer2model
   char media_export_dir[PAR_MAX_STRLEN];
   char media_import_dir[PAR_MAX_STRLEN];
   char media_input_file[PAR_MAX_STRLEN];
+
   // visco
+  char visco_type[PAR_MAX_STRLEN]; // graves_Qs
+  int  visco_itype; // graves_Qs
   float visco_Qs_freq;
 
   // source
-  int source_input_itype;
+  //int source_input_itype;
   char source_input_file[PAR_MAX_STRLEN];
   int is_export_source;
   char source_export_dir[PAR_MAX_STRLEN];
 
-  //float source_coords[CONST_NDIM];
-  //int   source_index[CONST_NDIM];
-  //char  source_name[PAR_MAX_STRLEN];
-  //char  wavelet_name[PAR_MAX_STRLEN];
-  //float wavelet_coefs[10]; // maximum 10 coefficients for wavelet
-  //float wavelet_tstart;
-  //float wavelet_tend;
-  //float source_force_vector[CONST_NDIM];
-  //float source_moment_tensor[CONST_NDIM_2];
-
-  char  source_name[PAR_MAX_STRLEN];
-  int   source_number;
-  float **source_coords;
-  int   **source_index;
-  float **source_inc; // for index with shift
-  char  **wavelet_name;
-  float **wavelet_coefs; // maximum 10 coefficients for wavelet
-  float *wavelet_tstart;
-  float *wavelet_tend;
-  float **source_force_vector;
-  float **source_moment_tensor;
-  int   *source_force_actived;
-  int   *source_moment_actived;
+  char source_dd_input_file[PAR_MAX_STRLEN];
+  int  source_dd_add_at_point;
+  int  source_dd_nt_per_read;
 
   // output
   // receiver
@@ -172,23 +165,21 @@ typedef struct{
   int output_all;
 } par_t;
 
-void
+int
 par_read_from_file(char *par_fname, par_t *par, int verbose);
 
 int 
 par_read_from_str(const char *str, par_t *par);
 
-void 
+int 
 par_read_json_cfspml(cJSON *item,
       int *nlay, float *amax, float *bmax, float *vel);
-void 
-par_read_json_source(cJSON *item,
-      float *src_coord, int *grid_index, float *grid_inc,
-      float *force_vector,  int *force_actived,
-      float *moment_vector, int *moment_actived,
-      char *wavelet_name, float *wavelet_coefs, float *t_start, float *t_end);
+
+int 
+par_read_json_ablexp(cJSON *item, int *nlay, float *vel);
 
 int
 par_print(par_t *par);
 
 #endif
+

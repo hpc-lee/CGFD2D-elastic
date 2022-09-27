@@ -21,8 +21,8 @@ md_init(gdinfo_t *gdinfo, md_t *md, int media_type, int visco_type)
   md->nx   = gdinfo->nx;
   md->nz   = gdinfo->nz;
 
-  md->siz_iz   = md->nx;
-  md->siz_icmp = md->nx * md->nz;
+  md->siz_line   = md->nx;
+  md->siz_slice  = md->nx * md->nz;
 
   // media type
   md->medium_type = media_type;
@@ -45,7 +45,7 @@ md_init(gdinfo_t *gdinfo, md_t *md, int media_type, int visco_type)
 
   // visco
   md->visco_type = visco_type;
-  if (visco_type == CONST_VISCO_GRAVES) {
+  if (visco_type == CONST_VISCO_GRAVES_QS) {
    md->ncmp += 1;
   } 
  // else {
@@ -60,10 +60,10 @@ md_init(gdinfo_t *gdinfo, md_t *md, int media_type, int visco_type)
    */
   
   // vars
-  md->v4d = (float *) fdlib_mem_calloc_1d_float(
-                          md->siz_icmp * md->ncmp,
+  md->v3d = (float *) fdlib_mem_calloc_1d_float(
+                          md->siz_slice * md->ncmp,
                           0.0, "md_init");
-  if (md->v4d == NULL) {
+  if (md->v3d == NULL) {
       fprintf(stderr,"Error: failed to alloc medium_el_iso\n");
       fflush(stderr);
   }
@@ -81,19 +81,19 @@ md_init(gdinfo_t *gdinfo, md_t *md, int media_type, int visco_type)
   // set pos
   for (int icmp=0; icmp < md->ncmp; icmp++)
   {
-    cmp_pos[icmp] = icmp * md->siz_icmp;
+    cmp_pos[icmp] = icmp * md->siz_slice;
   }
 
   // init
   int icmp = 0;
   sprintf(cmp_name[icmp],"%s","rho");
-  md->rho = md->v4d + cmp_pos[icmp];
+  md->rho = md->v3d + cmp_pos[icmp];
 
   // acoustic iso
   if (media_type == CONST_MEDIUM_ACOUSTIC_ISO) {
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","kappa");
-    md->kappa = md->v4d + cmp_pos[icmp];
+    md->kappa = md->v3d + cmp_pos[icmp];
   }
 
   // iso
@@ -101,11 +101,11 @@ md_init(gdinfo_t *gdinfo, md_t *md, int media_type, int visco_type)
   {
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","lambda");
-    md->lambda = md->v4d + cmp_pos[icmp];
+    md->lambda = md->v3d + cmp_pos[icmp];
 
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","mu");
-    md->mu = md->v4d + cmp_pos[icmp];
+    md->mu = md->v3d + cmp_pos[icmp];
   }
 
   // vti
@@ -113,56 +113,54 @@ md_init(gdinfo_t *gdinfo, md_t *md, int media_type, int visco_type)
   {
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","c11");
-    md->c11 = md->v4d + cmp_pos[icmp];
+    md->c11 = md->v3d + cmp_pos[icmp];
 
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","c13");
-    md->c13 = md->v4d + cmp_pos[icmp];
+    md->c13 = md->v3d + cmp_pos[icmp];
 
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","c33");
-    md->c33 = md->v4d + cmp_pos[icmp];
+    md->c33 = md->v3d + cmp_pos[icmp];
 
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","c55");
-    md->c55 = md->v4d + cmp_pos[icmp];
+    md->c55 = md->v3d + cmp_pos[icmp];
   }
-
-
 
   // aniso
   if (media_type == CONST_MEDIUM_ELASTIC_ANISO)
   {
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","c11");
-    md->c11 = md->v4d + cmp_pos[icmp];
+    md->c11 = md->v3d + cmp_pos[icmp];
 
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","c13");
-    md->c13 = md->v4d + cmp_pos[icmp];
+    md->c13 = md->v3d + cmp_pos[icmp];
 
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","c15");
-    md->c15 = md->v4d + cmp_pos[icmp];
+    md->c15 = md->v3d + cmp_pos[icmp];
 
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","c33");
-    md->c33 = md->v4d + cmp_pos[icmp];
+    md->c33 = md->v3d + cmp_pos[icmp];
 
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","c35");
-    md->c35 = md->v4d + cmp_pos[icmp];
+    md->c35 = md->v3d + cmp_pos[icmp];
 
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","c55");
-    md->c55 = md->v4d + cmp_pos[icmp];
+    md->c55 = md->v3d + cmp_pos[icmp];
   }
 
   // plus Qs
-  if (visco_type == CONST_VISCO_GRAVES) {
+  if (visco_type == CONST_VISCO_GRAVES_QS) {
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","Qs");
-    md->Qs = md->v4d + cmp_pos[icmp];
+    md->Qs = md->v3d + cmp_pos[icmp];
   }
   
   // set pointer
@@ -202,7 +200,7 @@ md_import(md_t *md, char *in_dir)
         exit(-1);
       }
   
-      ierr = nc_get_var_float(ncid,varid,md->v4d + md->cmp_pos[icmp]);
+      ierr = nc_get_var_float(ncid,varid,md->v3d + md->cmp_pos[icmp]);
       if (ierr != NC_NOERR){
         fprintf(stderr,"nc error: %s\n", nc_strerror(ierr));
         exit(-1);
@@ -274,7 +272,7 @@ md_export(gdinfo_t  *gdinfo,
 
   // add vars
   for (int ivar=0; ivar<number_of_vars; ivar++) {
-    float *ptr = md->v4d + m3d_pos[ivar];
+    float *ptr = md->v3d + m3d_pos[ivar];
     ierr = nc_put_var_float(ncid, varid[ivar],ptr);
   }
   
@@ -299,7 +297,7 @@ md_gen_test_ac_iso(md_t *md)
 
   int nx = md->nx;
   int nz = md->nz;
-  int siz_iz = md->siz_iz;
+  int siz_line = md->siz_line;
 
   float *kappa3d = md->kappa;
   float *rho3d = md->rho;
@@ -308,7 +306,7 @@ md_gen_test_ac_iso(md_t *md)
   {
       for (size_t i=0; i<nx; i++)
       {
-        size_t iptr = i + k * siz_iz;
+        size_t iptr = i + k * siz_line;
         float Vp=3000.0;
         float rho=1500.0;
         float kappa = Vp*Vp*rho;
@@ -327,7 +325,7 @@ md_gen_test_el_iso(md_t *md)
 
   int nx = md->nx;
   int nz = md->nz;
-  int siz_iz = md->siz_iz;
+  int siz_line = md->siz_line;
 
   float *lam3d = md->lambda;
   float  *mu3d = md->mu;
@@ -337,15 +335,10 @@ md_gen_test_el_iso(md_t *md)
   {
       for (size_t i=0; i<nx; i++)
       {
-        size_t iptr = i + k * siz_iz;
+        size_t iptr = i + k * siz_line;
         float Vp=3000.0;
         float Vs=2000.0;
         float rho=1500.0;
-        if (k < nz - 30) {
-          Vp=5000.0;
-          Vs=2500.0;
-          rho=2000.0;
-        }
         float mu = Vs*Vs*rho;
         float lam = Vp*Vp*rho - 2.0*mu;
         lam3d[iptr] = lam;
@@ -358,24 +351,29 @@ md_gen_test_el_iso(md_t *md)
 }
 
 int
-md_gen_test_Qs(md_t *md, float Qs_freq)
+md_gen_test_el_vti(md_t *md)
 {
   int ierr = 0;
 
   int nx = md->nx;
   int nz = md->nz;
-  int siz_iz = md->siz_iz;
-
-  md->visco_Qs_freq = Qs_freq;
-
-  float *Qs = md->Qs;
+  int siz_line = md->siz_line;
 
   for (size_t k=0; k<nz; k++)
   {
       for (size_t i=0; i<nx; i++)
       {
-        size_t iptr = i + k * siz_iz;
-        Qs[iptr] = 20;
+        size_t iptr = i + k * siz_line;
+
+        float rho=1500.0;
+
+        md->rho[iptr] = rho;
+
+	      md->c11[iptr] = 25.2*1e9;//lam + 2.0f*mu;
+	      md->c13[iptr] = 10.9620*1e9;//lam;
+	      md->c33[iptr] = 18.0*1e9;//lam + 2.0f*mu;
+	      md->c55[iptr] = 5.12*1e9;//mu;
+        //-- Vp ~ sqrt(c11/rho) = 4098
       }
   }
 
@@ -389,13 +387,13 @@ md_gen_test_el_aniso(md_t *md)
 
   int nx = md->nx;
   int nz = md->nz;
-  int siz_iz = md->siz_iz;
+  int siz_line = md->siz_line;
 
   for (size_t k=0; k<nz; k++)
   {
       for (size_t i=0; i<nx; i++)
       {
-        size_t iptr = i + k * siz_iz;
+        size_t iptr = i + k * siz_line;
 
         float rho=1500.0;
 
@@ -416,6 +414,31 @@ md_gen_test_el_aniso(md_t *md)
   return ierr;
 }
 
+int
+md_gen_test_Qs(md_t *md, float Qs_freq)
+{
+  int ierr = 0;
+
+  int nx = md->nx;
+  int nz = md->nz;
+  int siz_line = md->siz_line;
+
+  md->visco_Qs_freq = Qs_freq;
+
+  float *Qs = md->Qs;
+
+  for (size_t k=0; k<nz; k++)
+  {
+      for (size_t i=0; i<nx; i++)
+      {
+        size_t iptr = i + k * siz_line;
+        Qs[iptr] = 20;
+      }
+  }
+
+  return ierr;
+}
+
 /*
  * convert rho to slowness to reduce number of arithmetic cal
  */
@@ -425,14 +448,6 @@ md_rho_to_slow(float *restrict rho, size_t siz_volume)
 {
   int ierr = 0;
 
-  /*
-  for (size_t k=0; k<nx; k++) {
-    for (size_t j=0; j<ny; j++) {
-      for (size_t i=0; i<nx; i++) {
-      }
-    }
-  }
-  */
   for (size_t iptr=0; iptr<siz_volume; iptr++) {
     if (rho[iptr] > 1e-10) {
       rho[iptr] = 1.0 / rho[iptr];
@@ -442,41 +457,4 @@ md_rho_to_slow(float *restrict rho, size_t siz_volume)
   }
 
   return ierr;
-}
-
-// unused
-int
-md_is_el_iso(md_t *md)
-{
-  int is = 0;
-  if (md->medium_type == CONST_MEDIUM_ELASTIC_ISO)
-  {
-    is = 1;
-  }
-
-  return is;
-}
-
-int
-md_is_el_aniso(md_t *md)
-{
-  int is = 0;
-  if (md->medium_type == CONST_MEDIUM_ELASTIC_ANISO)
-  {
-    is = 1;
-  }
-
-  return is;
-}
-
-int
-md_is_ac_iso(md_t *md)
-{
-  int is = 0;
-  if (md->medium_type == CONST_MEDIUM_ACOUSTIC_ISO)
-  {
-    is = 1;
-  }
-
-  return is;
 }

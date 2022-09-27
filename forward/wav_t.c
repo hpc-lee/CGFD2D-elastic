@@ -24,14 +24,14 @@ wav_init(gdinfo_t *gdinfo,
   V->nz   = gdinfo->nz;
   V->nlevel = number_of_levels;
 
-  V->siz_iz   = V->nx;
-  V->siz_icmp = V->nx * V->nz;
-  V->siz_ilevel = V->siz_icmp * V->ncmp;
+  V->siz_line   = V->nx;
+  V->siz_slice  = V->nx * V->nz;
+  V->siz_ilevel = V->siz_slice * V->ncmp;
 
   // vars
-  // 3 Vi, 6 Tij, 4 rk stages
-  V->v5d = (float *) fdlib_mem_calloc_1d_float(V->siz_ilevel * V->nlevel,
-                        0.0, "v5d, wf_el3d_1st");
+  // 2 Vi, 3 Tij, 4 rk stages
+  V->v4d = (float *) fdlib_mem_calloc_1d_float(V->siz_ilevel * V->nlevel,
+                        0.0, "v4d, wf_el3d_1st");
   // position of each var
   size_t *cmp_pos = (size_t *) fdlib_mem_calloc_1d_sizet(
                       V->ncmp, 0, "w3d_pos, wf_el3d_1st");
@@ -42,7 +42,7 @@ wav_init(gdinfo_t *gdinfo,
   // set value
   for (int icmp=0; icmp < V->ncmp; icmp++)
   {
-    cmp_pos[icmp] = icmp * V->siz_icmp;
+    cmp_pos[icmp] = icmp * V->siz_slice;
   }
 
   // set values
@@ -99,13 +99,13 @@ wav_ac_init(gdinfo_t *gdinfo,
   V->nz   = gdinfo->nz;
   V->nlevel = number_of_levels;
 
-  V->siz_iz   = V->nx;
-  V->siz_icmp = V->nx * V->nz;
-  V->siz_ilevel = V->siz_icmp * V->ncmp;
+  V->siz_line   = V->nx;
+  V->siz_slice  = V->nx * V->nz;
+  V->siz_ilevel = V->siz_slice * V->ncmp;
 
   // vars
-  // 3 Vi, 6 Tij, 4 rk stages
-  V->v5d = (float *) fdlib_mem_calloc_1d_float(V->siz_ilevel * V->nlevel,
+  // 2 Vi, 1 P, 4 rk stages
+  V->v4d = (float *) fdlib_mem_calloc_1d_float(V->siz_ilevel * V->nlevel,
                         0.0, "v5d, wf_ac3d_1st");
   // position of each var
   size_t *cmp_pos = (size_t *) fdlib_mem_calloc_1d_sizet(
@@ -117,15 +117,15 @@ wav_ac_init(gdinfo_t *gdinfo,
   // set value
   for (int icmp=0; icmp < V->ncmp; icmp++)
   {
-    cmp_pos[icmp] = icmp * V->siz_icmp;
+    cmp_pos[icmp] = icmp * V->siz_slice;
   }
 
   // set values
   int icmp = 0;
 
   /*
-   * 0-3: Vx,Vy,Vz
-   * 4: P
+   * 0-1: Vx,Vz
+   * 2: P
    */
 
   sprintf(cmp_name[icmp],"%s","Vx");
@@ -157,8 +157,8 @@ wav_check_value(float *restrict w, wav_t *wav)
 
   for (int icmp=0; icmp < wav->ncmp; icmp++)
   {
-    float *ptr = w + icmp * wav->siz_icmp;
-    for (size_t iptr=0; iptr < wav->siz_icmp; iptr++)
+    float *ptr = w + icmp * wav->siz_slice;
+    for (size_t iptr=0; iptr < wav->siz_slice; iptr++)
     {
       if (ptr[iptr] != ptr[iptr])
       {
@@ -173,8 +173,7 @@ wav_check_value(float *restrict w, wav_t *wav)
 }
 
 int
-wav_zero_edge(gdinfo_t *gdinfo, wav_t *wav,
-                                  float *restrict w4d)
+wav_zero_edge(gdinfo_t *gdinfo, wav_t *wav, float *restrict w4d)
 {
   int ierr = 0;
 
@@ -185,7 +184,7 @@ wav_zero_edge(gdinfo_t *gdinfo, wav_t *wav,
     // z1
     for (int k=0; k < gdinfo->nk1; k++)
     {
-      size_t iptr_k = k * gdinfo->siz_iz;
+      size_t iptr_k = k * gdinfo->siz_line;
         for (int i=0; i < gdinfo->nx; i++)
         {
           size_t iptr = iptr_k + i;
@@ -196,7 +195,7 @@ wav_zero_edge(gdinfo_t *gdinfo, wav_t *wav,
     // z2
     for (int k=gdinfo->nk2+1; k < gdinfo->nz; k++)
     {
-      size_t iptr_k = k * gdinfo->siz_iz;
+      size_t iptr_k = k * gdinfo->siz_line;
         for (int i=0; i < gdinfo->nx; i++)
         {
           size_t iptr = iptr_k + i;
@@ -207,7 +206,7 @@ wav_zero_edge(gdinfo_t *gdinfo, wav_t *wav,
     // x1
     for (int k = gdinfo->nk1; k <= gdinfo->nk2; k++)
     {
-      size_t iptr_k = k * gdinfo->siz_iz;
+      size_t iptr_k = k * gdinfo->siz_line;
         for (int i=0; i < gdinfo->ni1; i++)
         {
           size_t iptr = iptr_k + i;
@@ -218,7 +217,7 @@ wav_zero_edge(gdinfo_t *gdinfo, wav_t *wav,
     // x2
     for (int k = gdinfo->nk1; k <= gdinfo->nk2; k++)
     {
-      size_t iptr_k = k * gdinfo->siz_iz;
+      size_t iptr_k = k * gdinfo->siz_line;
         for (int i = gdinfo->ni2+1; i < gdinfo->nx; i++)
         {
           size_t iptr = iptr_k + i;

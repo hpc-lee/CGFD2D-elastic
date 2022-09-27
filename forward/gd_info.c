@@ -18,7 +18,6 @@ int
 gd_info_set(gdinfo_t *const gdinfo,
             const int number_of_total_grid_points_x,
             const int number_of_total_grid_points_z,
-                  int abs_num_of_layers[][2],
             const int fdx_nghosts,
             const int fdz_nghosts,
             const int verbose)
@@ -44,9 +43,14 @@ gd_info_set(gdinfo_t *const gdinfo,
   gdinfo->nk1 = fdz_nghosts;
   gdinfo->nk2 = gdinfo->nk1 + nk - 1;
 
+  gdinfo->gni1 = 0;
+  gdinfo->gni2 = gdinfo->gni1 + ni - 1;
+
+  gdinfo->gnk1 = 0;
+  gdinfo->gnk2 = gdinfo->gnk1 + nk - 1;
   // new var, will replace above old naming
-  gdinfo->siz_iz   = gdinfo->nx;
-  gdinfo->siz_icmp = gdinfo->nx * gdinfo->nz;
+  gdinfo->siz_line  = gdinfo->nx;
+  gdinfo->siz_slice = gdinfo->nx * gdinfo->nz;
 
   // set npoint_ghosts according to fdz_nghosts
   gdinfo->npoint_ghosts = fdz_nghosts;
@@ -149,5 +153,5 @@ gd_info_print(gdinfo_t *gdinfo)
   fprintf(stdout, " nk1   = %-10d\n", gdinfo->nk1);
   fprintf(stdout, " nk2   = %-10d\n", gdinfo->nk2);
 
-  return(0);
+  return 0;
 }

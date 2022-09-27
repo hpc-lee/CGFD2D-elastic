@@ -19,7 +19,7 @@
 #include "blk_t.h"
 
 #include "media_discrete_model.h"
-#include "sv_eq1st_curv_col.h"
+#include "drv_rk_curv_col.h"
 
 int main(int argc, char** argv)
 {
@@ -74,8 +74,7 @@ int main(int argc, char** argv)
   md_t            *md            = blk->md;
   wav_t           *wav           = blk->wav;
   src_t           *src           = blk->src;
-  bdryfree_t      *bdryfree      = blk->bdryfree;
-  bdrypml_t       *bdrypml       = blk->bdrypml;
+  bdry_t          *bdry          = blk->bdry;
   iorecv_t        *iorecv        = blk->iorecv;
   ioline_t        *ioline        = blk->ioline;
   iosnap_t        *iosnap        = blk->iosnap;
@@ -89,7 +88,6 @@ int main(int argc, char** argv)
   gd_info_set(gdinfo, 
               par->number_of_total_grid_points_x,
               par->number_of_total_grid_points_z,
-              par->abs_num_of_layers,
               fd->fdx_nghosts,
               fd->fdz_nghosts,
               verbose);
@@ -141,16 +139,14 @@ int main(int argc, char** argv)
 
         fprintf(stdout,"gerate grid using layer interp ...\n"); 
 
-        //gd_curv_gen_layer(par->in_grid_layer_file,
-				//			par->grid_layer_resample_factor,
-				//			par->grid_layer_start,
-				//			par->number_of_total_grid_points_x,
-				//			par->number_of_total_grid_points_y,
-				//			par->number_of_total_grid_points_z,
-				//			gdcurv->x3d, gdcurv->y3d, gdcurv->z3d,
-				//			gdinfo->nx, gdinfo->ni, gdinfo->gni1, fd->fdx_nghosts,
-				//			gdinfo->ny, gdinfo->nj, gdinfo->gnj1, fd->fdy_nghosts,
-				//			gdinfo->nz, gdinfo->nk, gdinfo->gnk1, fd->fdz_nghosts);
+        gd_curv_gen_layer(par->in_grid_layer_file,
+							par->grid_layer_resample_factor,
+							par->grid_layer_start,
+							par->number_of_total_grid_points_x,
+							par->number_of_total_grid_points_z,
+							gdcurv->x2d,  gdcurv->z2d,
+							gdinfo->nx, gdinfo->ni, gdinfo->gni1, fd->fdx_nghosts,
+							gdinfo->nz, gdinfo->nk, gdinfo->gnk1, fd->fdz_nghosts);
 
       break;
   }
@@ -230,15 +226,15 @@ int main(int argc, char** argv)
           md_gen_test_el_iso(md);
         }
 
-      //  if (md->medium_type == CONST_MEDIUM_ELASTIC_VTI) {
-      //    md_gen_test_el_vti(md);
-      //  }
+        if (md->medium_type == CONST_MEDIUM_ELASTIC_VTI) {
+          md_gen_test_el_vti(md);
+        }
 
         if (md->medium_type == CONST_MEDIUM_ELASTIC_ANISO) {
           md_gen_test_el_aniso(md);
         }
 
-        if (md->visco_type == CONST_VISCO_GRAVES) {
+        if (md->visco_type == CONST_VISCO_GRAVES_QS) {
           md_gen_test_Qs(md, par->visco_Qs_freq);
         }
 
@@ -388,27 +384,13 @@ int main(int argc, char** argv)
 //-------------------------------------------------------------------------------
 //-- source import or locate on fly
 //-------------------------------------------------------------------------------
-  
-  if (verbose>0) fprintf(stdout,"set source using info from par file ...\n"); 
 
-  src_set_by_par(gdinfo, gdcurv, src,
-                 t0, dt,
-                 fd->num_rk_stages, fd->rk_rhs_time,
-                 fd->fdx_max_half_len,
-                 par->source_name,
-                 par->source_number,
-                 par->source_index,
-                 par->source_inc,
-                 par->source_coords,
-                 par->source_force_vector,
-                 par->source_force_actived,
-                 par->source_moment_tensor,
-                 par->source_moment_actived,
-                 par->wavelet_name,
-                 par->wavelet_coefs,
-                 par->wavelet_tstart,
-                 par->wavelet_tend,
-                 verbose);
+  src_read_locate_file(gdinfo, gdcurv, src,
+                       par->source_input_file,
+                       t0, dt,
+                       fd->num_rk_stages, fd->rk_rhs_time,
+                       fd->fdx_max_half_len,
+                       verbose);
 
   /*
   if (par->is_export_source==1)
@@ -465,14 +447,20 @@ int main(int argc, char** argv)
                      blk->output_dir);
 
 //-------------------------------------------------------------------------------
-//-- absorbing boundary etc auxiliary variables
+//-- setup boundary
 //-------------------------------------------------------------------------------
 
-  if (verbose>0) fprintf(stdout,"setup absorbingg boundary ...\n"); 
+  if (verbose>0) fprintf(stdout,"setup boundary ...\n"); 
+
+  bdry_init(bdry, gdinfo->nx, gdinfo->nz);
+
+  //-- ade cfs-pml
   
   if (par->bdry_has_cfspml == 1)
   {
-    bdry_pml_set(gdinfo, gdcurv, wav, bdrypml,
+    if (verbose>0) fprintf(stdout,"setup ade cfs-pml ...\n"); 
+
+    bdry_pml_set(gdinfo, gdcurv, wav, bdry,
                  par->cfspml_is_sides,
                  par->abs_num_of_layers,
                  par->cfspml_alpha_max,
@@ -481,15 +469,27 @@ int main(int argc, char** argv)
                  verbose);
   }
 
-//-------------------------------------------------------------------------------
-//-- free surface preproc
-//-------------------------------------------------------------------------------
+  //-- ablexp
+  
+  if (par->bdry_has_ablexp == 1)
+  {
+    if (verbose>0) fprintf(stdout,"setup sponge layer ...\n"); 
 
-  if (verbose>0) fprintf(stdout,"cal free surface matrix ...\n"); 
+    bdry_ablexp_set(gdinfo, gdcurv, wav, bdry,
+                    par->ablexp_is_sides,
+                    par->abs_num_of_layers,
+                    par->ablexp_velocity,
+                    dt,
+                    verbose);
+  }
+
+  //-- free surface preproc
 
   if (par->bdry_has_free == 1)
   {
-    bdry_free_set(gdinfo,bdryfree, par->free_is_sides, verbose);
+    if (verbose>0) fprintf(stdout,"cal free surface matrix ...\n"); 
+
+    bdry_free_set(gdinfo, bdry, par->free_is_sides, verbose);
   }
 
 //-------------------------------------------------------------------------------
@@ -509,21 +509,21 @@ int main(int argc, char** argv)
 //-------------------------------------------------------------------------------
   
   // convert rho to 1 / rho to reduce number of arithmetic cal
-  md_rho_to_slow(md->rho, md->siz_icmp);
+  md_rho_to_slow(md->rho, md->siz_slice);
 
   if (verbose>0) fprintf(stdout,"start solver ...\n"); 
   
   time_t t_start = time(NULL);
   
-  sv_eq1st_curv_col_allstep(fd,gdinfo,gdcurv_metric,md,
-                            src,bdryfree,bdrypml,
-                            wav, 
-                            iorecv,ioline,iosnap,
-                            dt,nt_total,t0,
-                            blk->output_dir,
-                            par->check_nan_every_nummber_of_steps,
-                            par->output_all,
-                            verbose);
+  drv_rk_curv_col_allstep(fd,gdinfo,gdcurv_metric,md,
+                          src,bdry,
+                          wav, 
+                          iorecv,ioline,iosnap,
+                          dt,nt_total,t0,
+                          blk->output_dir,
+                          par->check_nan_every_nummber_of_steps,
+                          par->output_all,
+                          verbose);
   
   time_t t_end = time(NULL);
   
@@ -538,11 +538,12 @@ int main(int argc, char** argv)
   io_recv_output_sac(iorecv,dt,wav->ncmp,wav->cmp_name,
                       src->evtnm,blk->output_dir,err_message);
 
-  io_line_output_sac(ioline,dt,wav->cmp_name,src->evtnm,blk->output_dir);
+  if(md->medium_type == CONST_MEDIUM_ELASTIC_ISO) {
+    io_recv_output_sac_el_iso_strain(iorecv,md->lambda,md->mu,dt,
+                          src->evtnm,blk->output_dir,err_message);
+  }
 
-//-------------------------------------------------------------------------------
-//-- postprocess
-//-------------------------------------------------------------------------------
+  io_line_output_sac(ioline,dt,wav->cmp_name,src->evtnm,blk->output_dir);
 
   return 0;
 }

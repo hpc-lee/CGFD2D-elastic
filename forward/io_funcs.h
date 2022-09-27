@@ -22,7 +22,7 @@ typedef struct
   float dk;
   int   i;
   int   k;
-  int   indx1d;
+  int   indx1d[CONST_NDIM_2];
   float *seismo;
   char  name[CONST_MAX_STRLEN];
 } iorecv_one_t;
@@ -99,37 +99,6 @@ iosnap_nc_t;
  * function prototype
  *************************************************/
 
-void
-io_build_fname(char *out_dir,
-               char *prefix,
-               char *subfix,
-               char *ou_fname);
-
-void
-io_build_fname_time(char *out_dir,
-                    char *prefix,
-                    char *subfix,
-                    int  it,
-                    char *ou_fname);
-
-void
-io_snapshot_export_binary(char *fname,
-                   float *restrict var,
-                   int nx,
-                   int nz,
-                   int *snap_indx,
-                   int verbose);
-
-void
-io_var2d_export_nc(char   *ou_file,
-                   float  *restrict v3d,
-                   size_t *restrict v3d_pos,
-                   char  **restrict v3d_name,
-                   int   number_of_vars,
-                   char  **restrict coord_name,
-                   int  nx,
-                   int  nz);
-
 int
 io_recv_read_locate(gdinfo_t *gdinfo,
                     gd_t *gd,
@@ -150,7 +119,7 @@ io_line_locate(gdinfo_t *gdinfo,
                int   *receiver_line_count,
                char **receiver_line_name);
 
-void
+int
 io_snapshot_locate(gdinfo_t *gdinfo,
                    iosnap_t *iosnap,
                     int  number_of_snapshot,
@@ -235,9 +204,21 @@ io_line_output_sac(ioline_t *ioline,
       float dt, char **cmp_name, char *evtnm, char *output_dir);
 
 int
+io_recv_output_sac_el_iso_strain(iorecv_t *iorecv,
+                     float *restrict lam3d,
+                     float *restrict mu3d,
+                     float dt,
+                     char *evtnm,
+                     char *output_dir,
+                     char *err_message);
+
+int
 iosnap_print(iosnap_t *iosnap);
 
 int
 iorecv_print(iorecv_t *iorecv);
+
+int
+io_get_nextline(FILE *fp, char *str, int length);
 
 #endif

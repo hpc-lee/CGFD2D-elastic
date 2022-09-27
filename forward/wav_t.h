@@ -13,13 +13,13 @@
 
 // wavefield variables elastic 1st eqn: vel + stress
 typedef struct {
-  float *v5d; // allocated var
+  float *v4d; // allocated var
 
   int n1, n2, n3, n4, n5;
   int nx, nz, ncmp, nlevel;
 
-  size_t siz_iz;
-  size_t siz_icmp;
+  size_t siz_line;
+  size_t siz_slice;
   size_t siz_ilevel;
 
   size_t *cmp_pos;

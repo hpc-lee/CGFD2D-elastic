@@ -1,7 +1,3 @@
-/*
- *
- */
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,142 +19,10 @@
 #endif
 
 /*
- * export to a single file
- */
-
-void
-io_build_fname(char *out_dir,
-               char *prefix,
-               char *sufix,
-               char *ou_fname)
-{
-  sprintf(ou_fname,"%s/%s_%s",out_dir,prefix,sufix);
-
-  return;
-}
-
-void
-io_build_fname_time(char *out_dir,
-                    char *prefix,
-                    char *sufix,
-                    int  it,
-                    char *ou_fname)
-{
-  sprintf(ou_fname,"%s/%s_it%d%s",out_dir,prefix,it,sufix);
-
-  return;
-}
-
-void
-io_snapshot_export_binary(char *fname,
-                   float *restrict var,
-                   int nx,
-                   int nz,
-                   int *snap_indx,
-                   int verbose)
-{
-  FILE *fp=fopen(fname,"wb");
-  if (fp == NULL) {
-    fprintf(stderr,"Error: can't create : %s\n", fname);
-    exit(1);
-  }
-
-  // index triple
-  int i1 = snap_indx[0];
-  int k1 = snap_indx[1];
-  int ic = snap_indx[2];
-  int kc = snap_indx[3];
-  int di = snap_indx[4];
-  int dk = snap_indx[5];
-
-  for (int n3=0; n3<kc; n3++)
-  {
-    int k = k1 + n3 * dk;
-      for (int n1=0; n1<ic; n1++)
-      {
-        int i = i1 + n1 * di;
-        int iptr = i + k * nx;
-        fwrite(var+iptr, 1, sizeof(float), fp);
-      }
-  }
-
-  fclose(fp);
-
-  return;
-}
-
-/*
- * append to a single file
- */
-
-/*
-void
-io_snapshot_append(FILE *fp,
-                   float *restrict var,
-                   size_t ni,
-                   size_t nj,
-                   size_t nk,
-                   int verbose)
-{
-
-}
-*/
-
-/*
- *  export all var3ds to netcdf file
- */
-void io_var2d_export_nc(char   *ou_file,
-                   float  *restrict v3d,
-                   size_t *restrict v3d_pos,
-                   char  **restrict v3d_name,
-                   int   number_of_vars,
-                   char  **restrict coord_name,
-                   int  nx,
-                   int  nz)
-{
-  int ncid;
-  int varid[number_of_vars];
-  int dimid[CONST_NDIM];
-
-  int ierr = nc_create(ou_file, NC_CLOBBER, &ncid);
-  if (ierr != NC_NOERR){
-    fprintf(stderr,"ou_file=%s\n",ou_file);
-    fprintf(stderr,"creat coord nc error: %s\n", nc_strerror(ierr));
-    exit(-1);
-  }
-
-  // define dimension: last dim varis fastest for c nc file
-  ierr = nc_def_dim(ncid, coord_name[0], nx, &dimid[1]);
-  ierr = nc_def_dim(ncid, coord_name[1], nz, &dimid[0]);
-
-  // define vars
-  for (int ivar=0; ivar<number_of_vars; ivar++) {
-    ierr = nc_def_var(ncid, v3d_name[ivar], NC_FLOAT, CONST_NDIM, dimid, &varid[ivar]);
-  }
-
-  // end def
-  ierr = nc_enddef(ncid);
-
-  // add vars
-  for (int ivar=0; ivar<number_of_vars; ivar++) {
-    float *ptr = v3d + v3d_pos[ivar];
-    ierr = nc_put_var_float(ncid, varid[ivar],ptr);
-  }
-  
-  // close file
-  ierr = nc_close(ncid);
-  if (ierr != NC_NOERR){
-    fprintf(stderr,"nc error: %s\n", nc_strerror(ierr));
-    exit(-1);
-  }
-}
-
-
-/*
  * read in station list file and locate station
  */
-
-int io_recv_read_locate(gdinfo_t *gdinfo,
+int
+io_recv_read_locate(gdinfo_t *gdinfo,
                     gd_t *gd,
                     iorecv_t  *iorecv,
                     int       nt_total,
@@ -172,91 +36,117 @@ int io_recv_read_locate(gdinfo_t *gdinfo,
 	{
 	    fprintf (stdout, "Cannot open input file %s\n", in_filenm);
 	    fflush (stdout);
-	    return(1);
+	    return 1;
 	}
 
   // number of station
-  int nr, nr_loc, nr_point;
+  int nr;
 
-  fgets(line,500,fp);
-  sscanf(line, "%d %d",&nr_loc, &nr_point);
-
-  nr = nr_loc + nr_point;
-
-  //fprintf(stdout, "-- nr_loc=%d, nr_point=%d, nr=%d\n", nr_loc, nr_point, nr);
-
-  if (nr_loc > 0) {
-    fprintf(stderr, "ERROR: nr_loc=%d, coord loc not implement yet\n", nr_loc);
-    fflush(stderr);
-    exit(1);
-  }
+  io_get_nextline(fp, line, 500);
+  sscanf(line, "%d", &nr);
 
   // check fail in the future
-  iorecv_one_t *recvone = (iorecv_one_t *)
-                                      malloc(nr * sizeof(iorecv_one_t));
+  iorecv_one_t *recvone = (iorecv_one_t *)malloc(nr * sizeof(iorecv_one_t));
 
   // read coord and locate
 
   int ir=0;
   int nr_this = 0; // in this thread
+  int is_coord;
+  int is_depth;
 
-  //for (ir=0; ir<nr_loc; ir++)
-  //{
-  //  float rx, ry, rz;
-  //  // read one line
-  //  fgets(line,500,fp);
-  //  // get values
-  //  sscanf(line, "%s %f %f %f", sta_name[ir], &rx, &ry, &rz);
-  //  // locate
-  //  if (is_coord_in_phys_region(rx,ry,rz,nx,ny,nz,ni1,ni2,nj1,nj2,nk1,nk2,x3d,y3d,z3d)==1)
-  //  {
-  //    int ptr_this = nr_this * CONST_NDIM;
-  //    sprintf(sta_name[nr_this], "%s", sta_name[ir]);
-  //    sta_coord[ptr_this+0]=rx;
-  //    sta_coord[ptr_this+1]=ry;
-  //    sta_coord[ptr_this+2]=rz;
-  //    // set point and shift
-
-  //    nr_this += 1;
-  //  }
-  //}
-
-  // read index and locate
-
-  for (ir=0; ir<nr_point; ir++)
+  for (ir=0; ir<nr; ir++)
   {
-    int ix, iz;
+    float rx, rz;
+    float rx_inc, rz_inc; // shift in computational space grid
+    int ix, iz; // local index
+
     // read one line
-    fgets(line,500,fp);
+    io_get_nextline(fp, line, 500);
+
     // get values
-    sscanf(line, "%s %d %d", recvone[ir].name, &ix, &iz);
-    //fprintf(stdout,"== in: %s %d %d %d\n", sta_name[ir],ix,iy,iz); fflush(stdout);
+    sscanf(line, "%s %d %d %g %g", 
+              recvone[ir].name, &is_coord, &is_depth, &rx, &rz);
+    
+    // by grid index
+    if (is_coord == 0)
+    {
+      // add ghosts, to local point
+      rx = rx + gdinfo->fdx_nghosts;
+      rz = rz + gdinfo->fdz_nghosts;
+      // if sz is relative to surface, convert to normal index
+      if (is_depth == 1) {
+        rz = gdinfo->nk2 - rz;
+      }
 
-    // convert to local index w ghost
-    int i_local = ix + gdinfo->fdx_nghosts;
-    int k_local = iz + gdinfo->fdz_nghosts;
+      // do not take nearest value, but use smaller value
+      ix = (int) (rx + 0.0);
+      iz = (int) (rz + 0.0);
+      rx_inc = rx - ix;
+      rz_inc = rz - iz;
+    }
+    // by axis
+    else
+    {
+      // convert coord to global index
+      if (gd->type == GD_TYPE_CURV)
+      {
+        // if rz is depth, convert to axis when it is in this thread
+        if (is_depth == 1) {
+          //gd_curv_depth_to_axis(gdinfo,gd,rx,&rz);
+        }
+        gd_curv_coord_to_local_indx(gdinfo,gd,rx,rz,
+                               &ix,&iz,&rx_inc,&rz_inc);
+      }
+      else if (gd->type == GD_TYPE_CART)
+      {
+        // if sz is depth, convert to axis
+        if (is_depth == 1) {
+          rz = gd->z1d[gdinfo->nk2] - rz;
+        }
+        gd_cart_coord_to_local_indx(gdinfo,gd,rx,rz,
+                               &ix,&iz,&rx_inc,&rz_inc);
+      }
 
-    int ptr_this = nr_this * CONST_NDIM;
-    iorecv_one_t *this_recv = recvone + nr_this;
+      if (rx_inc < 0.0) {
+        rx_inc = 1.0 + rx_inc;
+        ix -= 1;
+      }
+      if (rz_inc < 0.0) {
+        rz_inc = 1.0 + rz_inc;
+        iz -= 1;
+      }
+    }
 
-    sprintf(this_recv->name, "%s", recvone[ir].name);
+    if (gd_info_lindx_is_inner(ix,iz,gdinfo) == 1)
+    {
+      // index, to get coord
+      if (is_coord == 0)
+      {
+        rx = gd_coord_get_x(gd,ix,iz);
+        rz = gd_coord_get_z(gd,ix,iz);
+      }
 
-    // get coord
-    this_recv->x = gd_coord_get_x(gd,i_local,k_local);
-    this_recv->z = gd_coord_get_z(gd,i_local,k_local);
+      iorecv_one_t *this_recv = recvone + nr_this;
 
-    // set point and shift
-    this_recv->i=i_local;
-    this_recv->k=k_local;
-    this_recv->di=0.0;
-    this_recv->dk=0.0;
+      sprintf(this_recv->name, "%s", recvone[ir].name);
 
-    this_recv->indx1d = i_local + k_local * gd->siz_iz;
+      // get coord
+      this_recv->x = rx;
+      this_recv->z = rz;
+      // set point and shift
+      this_recv->i=ix;
+      this_recv->k=iz;
+      this_recv->di = rx_inc;
+      this_recv->dk = rz_inc;
 
-    //fprintf(stdout,"== ir_this=%d,name=%s,i=%d,j=%d,k=%d\n",
-    //      nr_this,sta_name[nr_this],i_local,j_local,k_local); fflush(stdout);
+      this_recv->indx1d[0] = ix   + iz     * gd->siz_line;
+      this_recv->indx1d[1] = ix+1 + iz     * gd->siz_line;
+      this_recv->indx1d[2] = ix   + (iz+1) * gd->siz_line;
+      this_recv->indx1d[3] = ix+1 + (iz+1) * gd->siz_line;
 
-    nr_this += 1;
+      nr_this += 1;
+    }
   }
 
   fclose(fp);
@@ -273,19 +163,19 @@ int io_recv_read_locate(gdinfo_t *gdinfo,
     recvone->seismo = (float *) malloc(num_of_vars * nt_total * sizeof(float));
   }
 
-  return(0);
+  return 0;
 }
 
 int io_line_locate(gdinfo_t *gdinfo,
-               gd_t *gd,
-               ioline_t *ioline,
-               int    num_of_vars,
-               int    nt_total,
-               int    number_of_receiver_line,
-               int   *receiver_line_index_start,
-               int   *receiver_line_index_incre,
-               int   *receiver_line_count,
-               char **receiver_line_name)
+                   gd_t *gd,
+                   ioline_t *ioline,
+                   int    num_of_vars,
+                   int    nt_total,
+                   int    number_of_receiver_line,
+                   int   *receiver_line_index_start,
+                   int   *receiver_line_index_incre,
+                   int   *receiver_line_count,
+                   char **receiver_line_name)
 {
   int ierr = 0;
 
@@ -370,7 +260,7 @@ int io_line_locate(gdinfo_t *gdinfo,
         int i = gi + gdinfo->fdx_nghosts;
         int k = gk + gdinfo->fdz_nghosts;
 
-        int iptr = i + k * gd->siz_iz;
+        int iptr = i + k * gd->siz_line;
 
         ioline->recv_seq [m][ir] = ipt;
         ioline->recv_iptr[m][ir] = iptr;
@@ -386,7 +276,7 @@ int io_line_locate(gdinfo_t *gdinfo,
   return ierr;
 }
 
-void
+int
 io_snapshot_locate(gdinfo_t *gdinfo,
                    iosnap_t *iosnap,
                     int  number_of_snapshot,
@@ -499,7 +389,7 @@ io_snapshot_locate(gdinfo_t *gdinfo,
 
   iosnap->num_of_snap = isnap;
 
-  return;
+  return 0;
 }
 
 int
@@ -606,7 +496,7 @@ io_snap_nc_put(iosnap_t *iosnap,
   int ierr = 0;
 
   int num_of_snap = iosnap->num_of_snap;
-  size_t siz_iz = gdinfo->siz_iz;
+  size_t siz_line = gdinfo->siz_line;
 
   for (int n=0; n<num_of_snap; n++)
   {
@@ -642,13 +532,13 @@ io_snap_nc_put(iosnap_t *iosnap,
       // vel
       if (is_run_out_vel == 1 && snap_out_V==1)
       {
-        io_snap_pack_buff(w4d + wav->Vx_pos,siz_iz,
+        io_snap_pack_buff(w4d + wav->Vx_pos,siz_line,
               snap_i1,snap_ni,snap_di,
               snap_k1,snap_nk,snap_dk,buff);
         nc_put_vara_float(iosnap_nc->ncid[n],iosnap_nc->varid_V[n*CONST_NDIM+0],
               startp,countp,buff);
 
-        io_snap_pack_buff(w4d + wav->Vz_pos, siz_iz,
+        io_snap_pack_buff(w4d + wav->Vz_pos, siz_line,
               snap_i1,snap_ni,snap_di,
               snap_k1,snap_nk,snap_dk,buff);
         nc_put_vara_float(iosnap_nc->ncid[n],iosnap_nc->varid_V[n*CONST_NDIM+1],
@@ -656,19 +546,19 @@ io_snap_nc_put(iosnap_t *iosnap,
       }
       if (is_run_out_stress==1 && snap_out_T==1)
       {
-        io_snap_pack_buff(w4d + wav->Txx_pos,siz_iz,
+        io_snap_pack_buff(w4d + wav->Txx_pos,siz_line,
               snap_i1,snap_ni,snap_di,
               snap_k1,snap_nk,snap_dk,buff);
         nc_put_vara_float(iosnap_nc->ncid[n],iosnap_nc->varid_T[n*3+0],
               startp,countp,buff);
 
-        io_snap_pack_buff(w4d + wav->Tzz_pos,siz_iz,
+        io_snap_pack_buff(w4d + wav->Tzz_pos,siz_line,
               snap_i1,snap_ni,snap_di,
               snap_k1,snap_nk,snap_dk,buff);
         nc_put_vara_float(iosnap_nc->ncid[n],iosnap_nc->varid_T[n*3+1],
               startp,countp,buff);
         
-        io_snap_pack_buff(w4d + wav->Txz_pos,siz_iz,
+        io_snap_pack_buff(w4d + wav->Txz_pos,siz_line,
               snap_i1,snap_ni,snap_di,
               snap_k1,snap_nk,snap_dk,buff);
         nc_put_vara_float(iosnap_nc->ncid[n],iosnap_nc->varid_T[n*3+2],
@@ -785,7 +675,7 @@ io_snap_nc_put_ac(iosnap_t *iosnap,
   int ierr = 0;
 
   int num_of_snap = iosnap->num_of_snap;
-  size_t siz_iz = gdinfo->siz_iz;
+  size_t siz_line = gdinfo->siz_line;
 
   for (int n=0; n<num_of_snap; n++)
   {
@@ -821,13 +711,13 @@ io_snap_nc_put_ac(iosnap_t *iosnap,
       // vel
       if (is_run_out_vel == 1 && snap_out_V==1)
       {
-        io_snap_pack_buff(w4d + wav->Vx_pos,siz_iz,
+        io_snap_pack_buff(w4d + wav->Vx_pos,siz_line,
               snap_i1,snap_ni,snap_di,
               snap_k1,snap_nk,snap_dk,buff);
         nc_put_vara_float(iosnap_nc->ncid[n],iosnap_nc->varid_V[n*CONST_NDIM+0],
               startp,countp,buff);
 
-        io_snap_pack_buff(w4d + wav->Vz_pos,siz_iz,
+        io_snap_pack_buff(w4d + wav->Vz_pos,siz_line,
               snap_i1,snap_ni,snap_di,
               snap_k1,snap_nk,snap_dk,buff);
         nc_put_vara_float(iosnap_nc->ncid[n],iosnap_nc->varid_V[n*CONST_NDIM+1],
@@ -835,7 +725,7 @@ io_snap_nc_put_ac(iosnap_t *iosnap,
       }
       if (is_run_out_stress==1 && snap_out_T==1)
       {
-        io_snap_pack_buff(w4d + wav->Txx_pos,siz_iz,
+        io_snap_pack_buff(w4d + wav->Txx_pos,siz_line,
               snap_i1,snap_ni,snap_di,
               snap_k1,snap_nk,snap_dk,buff);
         nc_put_vara_float(iosnap_nc->ncid[n],iosnap_nc->varid_T[n],
@@ -858,7 +748,7 @@ io_snap_nc_put_ac(iosnap_t *iosnap,
 
 int
 io_snap_pack_buff(float *restrict var,
-                  size_t siz_iz,
+                  size_t siz_line,
                   int starti,
                   int counti,
                   int increi,
@@ -874,11 +764,13 @@ io_snap_pack_buff(float *restrict var,
       for (int n1=0; n1<counti; n1++)
       {
         int i = starti + n1 * increi;
-        int iptr = i + k * siz_iz;
+        int iptr = i + k * siz_line;
         buff[iptr_snap] = var[iptr];
         iptr_snap++;
       }
   }
+
+  return 0;
 }
 
 int
@@ -888,30 +780,41 @@ io_snap_nc_close(iosnap_nc_t *iosnap_nc)
   {
     nc_close(iosnap_nc->ncid[n]);
   }
-  return(0);
+  return 0;
 }
 
 int
 io_recv_keep(iorecv_t *iorecv, float *restrict w4d,
-             int it, int ncmp, int siz_icmp)
+             int it, int ncmp, int siz_slice)
 {
+  float Lx1, Lx2, Ly1, Ly2, Lz1, Lz2;
+
   for (int n=0; n < iorecv->total_number; n++)
   {
     iorecv_one_t *this_recv = iorecv->recvone + n;
-    int iptr = this_recv->indx1d;
-    // need to implement interp, now just take value
-    for (int icmp=0; icmp < ncmp; icmp++) {
+    int *indx1d = this_recv->indx1d;
+
+    // get coef of linear interp
+    Lx2 = this_recv->di; Lx1 = 1.0 - Lx2;
+    Lz2 = this_recv->dk; Lz1 = 1.0 - Lz2;
+    for (int icmp=0; icmp < ncmp; icmp++)
+    {
       int iptr_sta = icmp * iorecv->max_nt + it;
-      this_recv->seismo[iptr_sta] = w4d[icmp*siz_icmp + iptr];
+      size_t iptr_cmp = icmp * siz_slice;
+      this_recv->seismo[iptr_sta] = 
+          w4d[iptr_cmp + indx1d[0]] * Lx1 * Lz1
+        + w4d[iptr_cmp + indx1d[1]] * Lx2 * Lz1
+        + w4d[iptr_cmp + indx1d[2]] * Lx1 * Lz2
+        + w4d[iptr_cmp + indx1d[3]] * Lx2 * Lz2;
     }
   }
 
-  return(0);
+  return 0;
 }
 
 int
 io_line_keep(ioline_t *ioline, float *restrict w4d,
-             int it, int ncmp, int siz_icmp)
+             int it, int ncmp, int siz_slice)
 {
   for (int n=0; n < ioline->num_of_lines; n++)
   {
@@ -925,10 +828,12 @@ io_line_keep(ioline_t *ioline, float *restrict w4d,
       for (int icmp=0; icmp < ncmp; icmp++)
       {
         int iptr_seismo = icmp * ioline->max_nt + it;
-        this_seismo[iptr_seismo] = w4d[icmp*siz_icmp + iptr];
+        this_seismo[iptr_seismo] = w4d[icmp*siz_slice + iptr];
       }
     }
   }
+
+  return 0;
 }
 
 int
@@ -970,6 +875,8 @@ io_recv_output_sac(iorecv_t *iorecv,
             dt, dt, iorecv->max_nt, err_message);
     }
   }
+
+  return 0;
 }
 
 int io_line_output_sac(ioline_t *ioline,
@@ -1010,6 +917,76 @@ int io_line_output_sac(ioline_t *ioline,
       } // icmp
     } // ir
   } // line
+
+  return 0;
+}
+
+// calculate and output strain cmp for elastic medium
+//   do not find a better file to hold this func
+//   temporarily put here
+
+int
+io_recv_output_sac_el_iso_strain(iorecv_t *iorecv,
+                     float *restrict lam3d,
+                     float *restrict mu3d,
+                     float dt,
+                     char *evtnm,
+                     char *output_dir,
+                     char *err_message)
+{
+  // use fake evt_x etc. since did not implement gather evt_x by mpi
+  float evt_x = 0.0;
+  float evt_y = 0.0;
+  float evt_z = 0.0;
+  float evt_d = 0.0;
+  char ou_file[CONST_MAX_STRLEN];
+
+  for (int ir=0; ir < iorecv->total_number; ir++)
+  {
+    iorecv_one_t *this_recv = iorecv->recvone + ir;
+    int iptr = this_recv->indx1d[0];
+
+    float lam = lam3d[iptr];
+    float mu  =  mu3d[iptr];
+
+    // cmp seq hard-coded, need to revise in the future
+    float *Txx = this_recv->seismo + 2 * iorecv->max_nt;
+    float *Tzz = this_recv->seismo + 3 * iorecv->max_nt;
+    float *Txz = this_recv->seismo + 4 * iorecv->max_nt;
+
+    float E1 = (lam + mu) / (mu * ( 3.0 * lam + 2.0 * mu));
+    float E2 = - lam / ( 2.0 * mu * (3.0 * lam + 2.0 * mu));
+    float E3 = 1.0 / mu;
+
+    // conver to strain per time step
+    for (int it = 0; it < iorecv->max_nt; it++)
+    {
+      float E0 = E2 * (Txx[it] + Tzz[it]);
+
+      Txx[it] = E0 - (E2 - E1) * Txx[it];
+      Tzz[it] = E0 - (E2 - E1) * Tzz[it];
+      Txz[it] = 0.5 * E3 * Txz[it];
+    }
+
+    // output to sca file
+    sprintf(ou_file,"%s/%s.%s.%s.sac", output_dir, evtnm, this_recv->name, "Exx");
+    sacExport1C1R(ou_file,Txx,evt_x, evt_y, evt_z, evt_d,
+          this_recv->x, 0.0, this_recv->z,
+          dt, dt, iorecv->max_nt, err_message);
+
+    sprintf(ou_file,"%s/%s.%s.%s.sac", output_dir, evtnm, this_recv->name, "Ezz");
+    sacExport1C1R(ou_file,Tzz,evt_x, evt_y, evt_z, evt_d,
+          this_recv->x, 0.0, this_recv->z,
+          dt, dt, iorecv->max_nt, err_message);
+
+    sprintf(ou_file,"%s/%s.%s.%s.sac", output_dir, evtnm, this_recv->name, "Exz");
+    sacExport1C1R(ou_file,Txz,evt_x, evt_y, evt_z, evt_d,
+          this_recv->x, 0.0, this_recv->z,
+          dt, dt, iorecv->max_nt, err_message);
+
+  } // loop ir
+
+  return 0;
 }
 
 int iosnap_print(iosnap_t *iosnap)
@@ -1031,7 +1008,7 @@ int iosnap_print(iosnap_t *iosnap)
               iosnap->k1_to_glob[n]);
   }
 
-  return(0);
+  return 0;
 }
 
 int iorecv_print(iorecv_t *iorecv)
@@ -1059,5 +1036,36 @@ int iorecv_print(iorecv_t *iorecv)
   //}
   //fprintf(stdout, "\n");
 
-  return(0);
+  return 0;
+}
+
+/*
+ * get next non-comment line
+ */
+
+int
+io_get_nextline(FILE *fp, char *str, int length)
+{
+  int ierr = 0;
+
+  do
+  {
+    if (fgets(str, length, fp) == NULL)
+    {
+      ierr = 1;
+      return ierr;
+    }
+  } while (str[0] == '#' || str[0] == '\n');
+
+  // remove newline char
+  int len = strlen(str);
+
+  if (len > 0 && str[len-1] == '\n') {
+    str[len-1] = '\0';
+  }
+
+  // for debug:
+  //fprintf(stdout," --return: %s\n", str);
+
+  return ierr;
 }

@@ -24,7 +24,7 @@ typedef struct {
 
   int n1, n2, n3;
   int nx, nz, ncmp;
-  float *v4d; // allocated var
+  float *v3d; // allocated var
 
   //to avoid ref x3d at different funcs
   float *x2d; // pointer to var
@@ -43,39 +43,18 @@ typedef struct {
   float xmin, xmax;
   float zmin, zmax;
 
-  size_t siz_iz;
-  size_t siz_icmp;
+  size_t siz_line;
+  size_t siz_slice;
 
   size_t *cmp_pos;
   char  **cmp_name;
 } gd_t;
 
-//  default means coordinate
-typedef struct {
-  int n1, n2, n3;
-  int nx, nz, ncmp;
-  float *v4d; // allocated var
-
-  //to avoid ref x3d at different funcs
-  float *x2d; // pointer to var
-  float *z2d;
-
-  // min/max including ghost points
-  float xmin, xmax;
-  float zmin, zmax;
-
-  size_t siz_iz;
-  size_t siz_icmp;
-
-  size_t *cmp_pos;
-  char  **cmp_name;
-} gdcurv_t_nouse;
-
 //  for metric
 typedef struct {
   int n1, n2, n3, n4;
   int nx, nz, ncmp;
-  float *v4d; // allocated var
+  float *v3d; // allocated var
 
   float *jac; // pointer to var
   float *xi_x;
@@ -83,8 +62,8 @@ typedef struct {
   float *zeta_x;
   float *zeta_z;
 
-  size_t siz_iz;
-  size_t siz_icmp;
+  size_t siz_line;
+  size_t siz_slice;
 
   size_t *cmp_pos;
   char  **cmp_name;
@@ -142,17 +121,14 @@ gd_curv_gen_layer(char *in_grid_layer_file,
                       int *grid_layer_resample_factor,
                       int *grid_layer_start,
                       int n_total_grid_x,
-                      int n_total_grid_y,
                       int n_total_grid_z,
-                      float *restrict x3d,
-                      float *restrict y3d,
-                      float *restrict z3d,
+                      float *restrict x2d,
+                      float *restrict z2d,
                       int nx, int ni, int gni1, int fdx_nghosts, 
-                      int ny, int nj, int gnj1, int fdy_nghosts, 
                       int nz, int nk, int gnk1, int fdz_nghosts);
 
-int gd_grid_z_interp(float *z3dpart, float *zlayerpart, int *NCellPerlay,
-                     int *VmapSpacingIsequal, int nLayers, int nx, int ny);
+int gd_grid_z_interp(float *z2dpart, float *zlayerpart, int *NCellPerlay,
+                     int *VmapSpacingIsequal, int nLayers);
 
 float gd_seval(int ni, float u,
             int n, float x[], float y[],
@@ -188,10 +164,9 @@ gd_curv_coord_to_local_indx(gdinfo_t *gdinfo,
                         gd_t *gd,
                         float sx, float sz,
                         int *si, int *sk,
-                        float *sx_inc, float *sz_inc,
-                        float *restrict wrk3d);
+                        float *sx_inc, float *sz_inc);
 
-  int
+int
 gd_curv_coord2index_sample(float sx, float sz, 
     float *points_x, // x coord of all points
     float *points_z,

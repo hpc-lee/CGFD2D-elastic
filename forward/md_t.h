@@ -10,10 +10,10 @@
 typedef struct {
   int n1, n2, n3, n4;
   int nx, nz, ncmp;
-  float *v4d; // allocated var
+  float *v3d; // allocated var
 
-  size_t siz_iz;
-  size_t siz_icmp;
+  size_t siz_line;
+  size_t siz_slice;
 
   size_t *cmp_pos;
   char  **cmp_name;
@@ -69,6 +69,9 @@ int
 md_gen_test_el_iso(md_t *md);
 
 int
+md_gen_test_el_vti(md_t *md);
+
+int
 md_gen_test_Qs(md_t *md, float Qs_freq);
 
 int
@@ -76,14 +79,5 @@ md_gen_test_el_aniso(md_t *md);
 
 int
 md_rho_to_slow(float *restrict rho, size_t siz_volume);
-
-int
-md_is_el_iso(md_t *md);
-
-int
-md_is_el_aniso(md_t *md);
-
-int
-md_is_ac_iso(md_t *md);
 
 #endif

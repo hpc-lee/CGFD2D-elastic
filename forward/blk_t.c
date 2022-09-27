@@ -22,15 +22,13 @@ blk_init(blk_t *blk, const int verbose)
 
   // alloc struct vars
   blk->fd            = (fd_t *)malloc(sizeof(fd_t));
-  blk->fdstg         = (fdstg_t *)malloc(sizeof(fdstg_t));
   blk->gdinfo        = (gdinfo_t *)malloc(sizeof(gdinfo_t));
   blk->gd            = (gd_t        *)malloc(sizeof(gd_t     ));
   blk->gdcurv_metric = (gdcurv_metric_t *)malloc(sizeof(gdcurv_metric_t));
   blk->md            = (md_t      *)malloc(sizeof(md_t     ));
   blk->wav           = (wav_t      *)malloc(sizeof(wav_t     ));
   blk->src           = (src_t      *)malloc(sizeof(src_t     ));
-  blk->bdryfree      = (bdryfree_t *)malloc(sizeof(bdryfree_t ));
-  blk->bdrypml       = (bdrypml_t  *)malloc(sizeof(bdrypml_t ));
+  blk->bdry          = (bdry_t     *)malloc(sizeof(bdry_t ));
   blk->iorecv        = (iorecv_t   *)malloc(sizeof(iorecv_t ));
   blk->ioline        = (ioline_t   *)malloc(sizeof(ioline_t ));
   blk->iosnap        = (iosnap_t   *)malloc(sizeof(iosnap_t ));
@@ -184,24 +182,11 @@ blk_dt_esti_curv(gdinfo_t *gdinfo, gd_t *gdcurv, md_t *md,
   float *restrict x2d = gdcurv->x2d;
   float *restrict z2d = gdcurv->z2d;
 
-  for (int k = gdinfo->nk1; k < gdinfo->nk2; k++)
+  for (int k = gdinfo->nk1; k <= gdinfo->nk2; k++)
   {
-      for (int i = gdinfo->ni1; i < gdinfo->ni2; i++)
+      for (int i = gdinfo->ni1; i <= gdinfo->ni2; i++)
       {
-        size_t iptr = i + k * gdinfo->siz_iz;
-
-//        if (md_is_el_iso(md)==1) {
-//          Vp = sqrt( (md->lambda[iptr] + 2.0 * md->mu[iptr]) / md->rho[iptr] );
-//        } else if (md_is_ac_iso(md)==1) {
-//          Vp = sqrt( md->kappa[iptr] / md->rho[iptr] );
-//        } else if (md_is_el_aniso(md)==1) {
-//          Vp = sqrt( (md->c11[iptr]) / md->rho[iptr] );
-//        } else {
-//          fprintf(stderr,"ERROR: medium type is not implemented\n");
-//          fprintf(stderr,"       medium_type=%d,aniso_type=%d\n",
-//                    md->medium_type,md->aniso_type);
-//          exit(1);
-//        }
+        size_t iptr = i + k * gdinfo->siz_line;
 
         if (md->medium_type == CONST_MEDIUM_ELASTIC_ISO) {
           Vp = sqrt( (md->lambda[iptr] + 2.0 * md->mu[iptr]) / md->rho[iptr] );
@@ -226,12 +211,9 @@ blk_dt_esti_curv(gdinfo_t *gdinfo, gd_t *gdcurv, md_t *md,
               if (ii != 0 && kk != 0)
               {
                 float p1[] = { x2d[iptr-ii], z2d[iptr-ii] };
-                float p2[] = { x2d[iptr-kk*gdinfo->siz_iz],
-                               z2d[iptr-kk*gdinfo->siz_iz] };
+                float p2[] = { x2d[iptr-kk*gdinfo->siz_line],
+                               z2d[iptr-kk*gdinfo->siz_line] };
 
-                //fprintf(stderr,"-> ii=%d,kk=%d,siz_iz=%d,iptr=%d,i=%d,k=%d\n",
-                //      ii,kk,gdinfo->siz_iz,iptr,i,k);
-                //fflush(stderr);
                 float L = fdlib_math_dist_point2line(x0, z0, p1, p2);
 
                 if (dtLe > L) dtLe = L;
@@ -250,7 +232,6 @@ blk_dt_esti_curv(gdinfo_t *gdinfo, gd_t *gdcurv, md_t *md,
           *dtmaxVp = Vp;
           *dtmaxL  = dtLe;
         }
-
       } // i
   } //k
 
@@ -278,17 +259,21 @@ blk_dt_esti_cart(gdinfo_t *gdinfo, gd_t *gdcart, md_t *md,
 
   float dtLe = fdlib_math_dist_point2line(0.0,0.0, p1, p2);
 
-  for (int k = gdinfo->nk1; k < gdinfo->nk2; k++)
+  for (int k = gdinfo->nk1; k <= gdinfo->nk2; k++)
   {
-      for (int i = gdinfo->ni1; i < gdinfo->ni2; i++)
+      for (int i = gdinfo->ni1; i <= gdinfo->ni2; i++)
       {
-        size_t iptr = i + k * gdinfo->siz_iz;
+        size_t iptr = i + k * gdinfo->siz_line;
 
-        if (md_is_el_iso(md)==1) {
+        if (md->medium_type == CONST_MEDIUM_ELASTIC_ISO) {
           Vp = sqrt( (md->lambda[iptr] + 2.0 * md->mu[iptr]) / md->rho[iptr] );
-        } else if (md_is_ac_iso(md)==1) {
+        } else if (md->medium_type == CONST_MEDIUM_ELASTIC_VTI) {
+          float Vpv = sqrt( md->c33[iptr] / md->rho[iptr] );
+          float Vph = sqrt( md->c11[iptr] / md->rho[iptr] );
+          Vp = Vph > Vpv ? Vph : Vpv;
+        } else if (md->medium_type == CONST_MEDIUM_ACOUSTIC_ISO) {
           Vp = sqrt( md->kappa[iptr] / md->rho[iptr] );
-        } else if (md_is_el_aniso(md)==1) {
+        } else if (md->medium_type == CONST_MEDIUM_ELASTIC_ANISO) {
           Vp = sqrt( (md->c11[iptr]) / md->rho[iptr] );
         } else {
           fprintf(stderr,"ERROR: medium type is not implemented\n");

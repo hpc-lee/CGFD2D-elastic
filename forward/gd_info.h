@@ -14,6 +14,10 @@ typedef struct {
   int ni2;
   int nk1;
   int nk2;
+  int gni1;
+  int gni2;
+  int gnk1;
+  int gnk2;
 
   int npoint_ghosts;
   int fdx_nghosts;
@@ -21,8 +25,8 @@ typedef struct {
 
   // size of a single var
   //  the following two naming are same
-  size_t siz_iz;
-  size_t siz_icmp;
+  size_t siz_line;
+  size_t siz_slice;
 
   // curvilinear coord name,
   char **index_name;
@@ -38,7 +42,6 @@ int
 gd_info_set(gdinfo_t *const gdinfo,
             const int number_of_total_grid_points_x,
             const int number_of_total_grid_points_z,
-                  int abs_num_of_layers[][2],
             const int fdx_nghosts,
             const int fdz_nghosts,
             const int verbose);

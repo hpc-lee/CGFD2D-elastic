@@ -20,7 +20,6 @@
 #define CONST_MEDIUM_ELASTIC_ANISO 4
 
 // visco type
-#define CONST_VISCO_GRAVES 1
-#define CONST_VISCO_NONE 0
+#define CONST_VISCO_GRAVES_QS 1
 
 #endif

@@ -9,28 +9,27 @@
 
 #include "fdlib_mem.h"
 #include "fdlib_math.h"
-#include "sv_eq1st_curv_col_ac_iso.h"
+#include "sv_curv_col_ac_iso.h"
 
 /*******************************************************************************
  * perform one stage calculation of rhs
  ******************************************************************************/
 
-void
-sv_eq1st_curv_col_ac_iso_onestage(
-  float *restrict w_cur,
-  float *restrict rhs, 
-  wav_t  *wav,
-  gdinfo_t   *gdinfo,
-  gdcurv_metric_t  *metric,
-  md_t *md,
-  bdryfree_t *bdryfree,
-  bdrypml_t  *bdrypml,
-  src_t *src,
-  // include different order/stentil
-  int num_of_fdx_op, fd_op_t *fdx_op,
-  int num_of_fdz_op, fd_op_t *fdz_op,
-  int fdz_max_len, 
-  const int verbose)
+int
+sv_curv_col_ac_iso_onestage(
+            float *restrict w_cur,
+            float *restrict rhs, 
+            wav_t  *wav,
+            gdinfo_t   *gdinfo,
+            gdcurv_metric_t  *metric,
+            md_t *md,
+            bdry_t *bdry,
+            src_t *src,
+            // include different order/stentil
+            int num_of_fdx_op, fd_op_t *fdx_op,
+            int num_of_fdz_op, fd_op_t *fdz_op,
+            int fdz_max_len, 
+            const int verbose)
 {
   // local pointer get each vars
   float *restrict Vx    = w_cur + wav->Vx_pos ;
@@ -59,12 +58,12 @@ sv_eq1st_curv_col_ac_iso_onestage(
   int nk  = gdinfo->nk;
   int nx  = gdinfo->nx;
   int nz  = gdinfo->nz;
-  size_t siz_iz   = gdinfo->siz_iz;
+  size_t siz_line   = gdinfo->siz_line;
 
   // local fd op
   int              fdx_inn_len;
   int    *restrict fdx_inn_indx;
-  float *restrict fdx_inn_coef;
+  float  *restrict fdx_inn_coef;
   int              fdz_inn_len;
   int    *restrict fdz_inn_indx;
   float  *restrict fdz_inn_coef;
@@ -80,86 +79,86 @@ sv_eq1st_curv_col_ac_iso_onestage(
   fdz_inn_coef = fdz_op[num_of_fdz_op-1].coef;
 
   // free surface at z2 for pressure
-  if (bdryfree->is_at_sides[CONST_NDIM-1][1] == 1)
+  if (bdry->is_sides_free[CONST_NDIM-1][1] == 1)
   {
     // imaging
-    sv_eq1st_curv_col_ac_iso_rhs_timg_z2(P,
-                                     ni1,ni2,nk1,nk2,nz,
-                                     siz_iz,
-                                     verbose);
+    sv_curv_col_ac_iso_rhs_timg_z2(P,
+                                   ni1,ni2,nk1,nk2,nz,
+                                   siz_line,
+                                   verbose);
   }
 
   // inner points
-  sv_eq1st_curv_col_ac_iso_rhs_inner(Vx,Vz,P,
-                                    hVx,hVz,hP,
-                                    xi_x, xi_z, zt_x, zt_z,
-                                    kappa3d, slw3d,
-                                    ni1,ni2,nk1,nk2,siz_iz,
-                                    fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
-                                    fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
-                                    verbose);
+  sv_curv_col_ac_iso_rhs_inner(Vx,Vz,P,
+                               hVx,hVz,hP,
+                               xi_x, xi_z, zt_x, zt_z,
+                               kappa3d, slw3d,
+                               ni1,ni2,nk1,nk2,siz_line,
+                               fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
+                               fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
+                               verbose);
 
   // free, abs, source in turn
 
   // free surface at z2 for velocity
-  if (bdryfree->is_at_sides[CONST_NDIM-1][1] == 1)
+  if (bdry->is_sides_free[CONST_NDIM-1][1] == 1)
   {
     // velocity: vlow
-    sv_eq1st_curv_col_ac_iso_rhs_vlow_z2(Vx,Vz,hP,
-                                        xi_x, xi_z, zt_x, zt_z,
-                                        kappa3d, slw3d,
-                                        ni1,ni2,nk1,nk2,siz_iz,
-                                        fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
-                                        num_of_fdz_op,fdz_op,fdz_max_len,
-                                        verbose);
+    sv_curv_col_ac_iso_rhs_vlow_z2(Vx,Vz,hP,
+                                   xi_x, xi_z, zt_x, zt_z,
+                                   kappa3d, slw3d,
+                                   ni1,ni2,nk1,nk2,siz_line,
+                                   fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
+                                   num_of_fdz_op,fdz_op,fdz_max_len,
+                                   verbose);
   }
 
   // cfs-pml, loop face inside
-  if (bdrypml->is_enable == 1)
+  if (bdry->is_enable_pml == 1)
   {
-    sv_eq1st_curv_col_ac_iso_rhs_cfspml(Vx,Vz,P,
-                                    hVx,hVz,hP,
-                                       xi_x, xi_z, zt_x, zt_z,
-                                       kappa3d, slw3d,
-                                       nk2, siz_iz,
-                                       fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
-                                       fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
-                                       bdrypml, bdryfree,
-                                       verbose);
+    sv_curv_col_ac_iso_rhs_cfspml(Vx,Vz,P,
+                                  hVx,hVz,hP,
+                                  xi_x, xi_z, zt_x, zt_z,
+                                  kappa3d, slw3d,
+                                  nk2, siz_line,
+                                  fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
+                                  fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
+                                  bdry,
+                                  verbose);
     
   }
 
   // add source term
   if (src->total_number > 0)
   {
-    sv_eq1st_curv_col_ac_iso_rhs_src(hVx,hVz,hP,
-                                    jac3d, slw3d, 
-                                    src,
-                                    verbose);
+    sv_curv_col_ac_iso_rhs_src(hVx,hVz,hP,
+                               jac3d, slw3d, 
+                               src,
+                               verbose);
   }
   // end func
 
-  return;
+  return 0;
 }
 
 /*******************************************************************************
  * calculate all points without boundaries treatment
  ******************************************************************************/
 
-void
-sv_eq1st_curv_col_ac_iso_rhs_inner(
-    float *restrict  Vx , float *restrict  Vz ,
-    float *restrict  P, 
-    float *restrict hVx , float *restrict hVz ,
-    float *restrict hP, 
-    float *restrict xi_x, float *restrict xi_z,
-    float *restrict zt_x, float *restrict zt_z,
-    float *restrict kappa3d, float *restrict slw3d,
-    int ni1, int ni2, int nk1, int nk2,
-    size_t siz_iz,
-    int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
-    int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef,
-    const int verbose)
+int
+sv_curv_col_ac_iso_rhs_inner(
+              float *restrict  Vx , float *restrict  Vz ,
+              float *restrict  P, 
+              float *restrict hVx , float *restrict hVz ,
+              float *restrict hP, 
+              float *restrict xi_x, float *restrict xi_z,
+              float *restrict zt_x, float *restrict zt_z,
+              float *restrict kappa3d, float *restrict slw3d,
+              int ni1, int ni2, int nk1, int nk2,
+              size_t siz_line,
+              int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
+              int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef,
+              const int verbose)
 {
   // use local stack array for speedup
   float  lfdx_coef [fdx_len];
@@ -187,13 +186,13 @@ sv_eq1st_curv_col_ac_iso_rhs_inner(
   }
   for (int k=0; k < fdz_len; k++) {
     lfdz_coef [k] = fdz_coef[k];
-    lfdz_shift[k] = fdz_indx[k] * siz_iz;
+    lfdz_shift[k] = fdz_indx[k] * siz_line;
   }
 
   // loop all points
   for (size_t k=nk1; k<=nk2; k++)
   {
-    size_t iptr_k = k * siz_iz;
+    size_t iptr_k = k * siz_line;
 
       size_t iptr = iptr_k + ni1;
 
@@ -239,7 +238,7 @@ sv_eq1st_curv_col_ac_iso_rhs_inner(
       }
   }
 
-  return;
+  return 0;
 }
 
 /*******************************************************************************
@@ -250,15 +249,15 @@ sv_eq1st_curv_col_ac_iso_rhs_inner(
  * implement traction image boundary 
  */
 
-void
-sv_eq1st_curv_col_ac_iso_rhs_timg_z2(
-    float *restrict  P,
-    int ni1, int ni2, int nk1, int nk2, int nz,
-    size_t siz_iz,
-    const int verbose)
+int
+sv_curv_col_ac_iso_rhs_timg_z2(
+               float *restrict  P,
+               int ni1, int ni2, int nk1, int nk2, int nz,
+               size_t siz_line,
+               const int verbose)
 {
   // nk2
-  size_t iptr_k = nk2 * siz_iz;
+  size_t iptr_k = nk2 * siz_line;
     size_t iptr = iptr_k + ni1;
     for (size_t i=ni1; i<=ni2; i++)
     {
@@ -274,32 +273,32 @@ sv_eq1st_curv_col_ac_iso_rhs_timg_z2(
     int k_phy = nk2 - (k-nk2);
       for (size_t i=ni1; i<=ni2; i++)
       {
-        size_t iptr_gho = i + k     * siz_iz;
-        size_t iptr_phy = i + k_phy * siz_iz;
+        size_t iptr_gho = i + k     * siz_line;
+        size_t iptr_phy = i + k_phy * siz_line;
 
         P[iptr_gho] = -P[iptr_phy];
       }
   }
 
-  return;
+  return 0;
 }
 
 /*
  * implement vlow boundary
  */
 
-void
-sv_eq1st_curv_col_ac_iso_rhs_vlow_z2(
-    float *restrict  Vx , float *restrict  Vz ,
-    float *restrict hP, 
-    float *restrict xi_x, float *restrict xi_z,
-    float *restrict zt_x, float *restrict zt_z,
-    float *restrict kappa3d, float *restrict slw3d,
-    int ni1, int ni2, int nk1, int nk2,
-    size_t siz_iz,
-    int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
-    int num_of_fdz_op, fd_op_t *fdz_op, int fdz_max_len,
-    const int verbose)
+int
+sv_curv_col_ac_iso_rhs_vlow_z2(
+               float *restrict  Vx , float *restrict  Vz ,
+               float *restrict hP, 
+               float *restrict xi_x, float *restrict xi_z,
+               float *restrict zt_x, float *restrict zt_z,
+               float *restrict kappa3d, float *restrict slw3d,
+               int ni1, int ni2, int nk1, int nk2,
+               size_t siz_line,
+               int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
+               int num_of_fdz_op, fd_op_t *fdz_op, int fdz_max_len,
+               const int verbose)
 {
   // use local stack array for speedup
   float  lfdx_coef [fdx_len];
@@ -339,12 +338,12 @@ sv_eq1st_curv_col_ac_iso_rhs_vlow_z2(
     int   *p_fdz_indx  = fdz_op[n].indx;
     float *p_fdz_coef  = fdz_op[n].coef;
     for (n_fd = 0; n_fd < lfdz_len ; n_fd++) {
-      lfdz_shift[n_fd] = p_fdz_indx[n_fd] * siz_iz;
+      lfdz_shift[n_fd] = p_fdz_indx[n_fd] * siz_line;
       lfdz_coef[n_fd]  = p_fdz_coef[n_fd];
     }
 
     // for index
-    size_t iptr_k = k * siz_iz;
+    size_t iptr_k = k * siz_line;
 
       size_t iptr = iptr_k + ni1;
 
@@ -382,7 +381,7 @@ sv_eq1st_curv_col_ac_iso_rhs_vlow_z2(
       }
   }
 
-  return;
+  return 0;
 }
 
 /*******************************************************************************
@@ -393,20 +392,20 @@ sv_eq1st_curv_col_ac_iso_rhs_vlow_z2(
  * cfspml, reference to each pml var inside function
  */
 
-void
-sv_eq1st_curv_col_ac_iso_rhs_cfspml(
-    float *restrict  Vx , float *restrict  Vz ,
-    float *restrict  P, 
-    float *restrict hVx , float *restrict hVz ,
-    float *restrict hP,
-    float *restrict xi_x, float *restrict xi_z,
-    float *restrict zt_x, float *restrict zt_z,
-    float *restrict kappa3d, float *restrict slw3d,
-    int nk2, size_t siz_iz,
-    int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
-    int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef,
-    bdrypml_t *bdrypml, bdryfree_t *bdryfree,
-    const int verbose)
+int
+sv_curv_col_ac_iso_rhs_cfspml(
+               float *restrict  Vx , float *restrict  Vz ,
+               float *restrict  P, 
+               float *restrict hVx , float *restrict hVz ,
+               float *restrict hP,
+               float *restrict xi_x, float *restrict xi_z,
+               float *restrict zt_x, float *restrict zt_z,
+               float *restrict kappa3d, float *restrict slw3d,
+               int nk2, size_t siz_line,
+               int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
+               int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef,
+               bdry_t *bdry,
+               const int verbose)
 {
   // loop var for fd
   int n_fd; // loop var for fd
@@ -436,7 +435,7 @@ sv_eq1st_curv_col_ac_iso_rhs_cfspml(
   }
   for (k=0; k < fdz_len; k++) {
     lfdz_coef [k] = fdz_coef[k];
-    lfdz_shift[k] = fdz_indx[k] * siz_iz;
+    lfdz_shift[k] = fdz_indx[k] * siz_line;
   }
 
   // check each side
@@ -445,20 +444,20 @@ sv_eq1st_curv_col_ac_iso_rhs_cfspml(
     for (int iside=0; iside<2; iside++)
     {
       // skip to next face if not cfspml
-      if (bdrypml->is_at_sides[idim][iside] == 0) continue;
+      if (bdry->is_sides_pml[idim][iside] == 0) continue;
 
       // get index into local var
-      int abs_ni1 = bdrypml->ni1[idim][iside];
-      int abs_ni2 = bdrypml->ni2[idim][iside];
-      int abs_nk1 = bdrypml->nk1[idim][iside];
-      int abs_nk2 = bdrypml->nk2[idim][iside];
+      int abs_ni1 = bdry->ni1[idim][iside];
+      int abs_ni2 = bdry->ni2[idim][iside];
+      int abs_nk1 = bdry->nk1[idim][iside];
+      int abs_nk2 = bdry->nk2[idim][iside];
 
       // get coef for this face
-      float *restrict ptr_coef_A = bdrypml->A[idim][iside];
-      float *restrict ptr_coef_B = bdrypml->B[idim][iside];
-      float *restrict ptr_coef_D = bdrypml->D[idim][iside];
+      float *restrict ptr_coef_A = bdry->A[idim][iside];
+      float *restrict ptr_coef_B = bdry->B[idim][iside];
+      float *restrict ptr_coef_D = bdry->D[idim][iside];
 
-      bdrypml_auxvar_t *auxvar = &(bdrypml->auxvar[idim][iside]);
+      bdrypml_auxvar_t *auxvar = &(bdry->auxvar[idim][iside]);
 
       // get pml vars
       float *restrict abs_vars_cur = auxvar->cur;
@@ -478,7 +477,7 @@ sv_eq1st_curv_col_ac_iso_rhs_cfspml(
         iptr_a = 0;
         for (k=abs_nk1; k<=abs_nk2; k++)
         {
-          iptr_k = k * siz_iz;
+          iptr_k = k * siz_line;
             iptr = iptr_k + abs_ni1;
             for (i=abs_ni1; i<=abs_ni2; i++)
             {
@@ -531,7 +530,7 @@ sv_eq1st_curv_col_ac_iso_rhs_cfspml(
         iptr_a = 0;
         for (k=abs_nk1; k<=abs_nk2; k++)
         {
-          iptr_k = k * siz_iz;
+          iptr_k = k * siz_line;
 
           // pml coefs
           int abs_k = k - abs_nk1;
@@ -583,7 +582,7 @@ sv_eq1st_curv_col_ac_iso_rhs_cfspml(
     } // iside
   } // idim
 
-  return;
+  return 0;
 }
 
 /*******************************************************************************
@@ -591,12 +590,12 @@ sv_eq1st_curv_col_ac_iso_rhs_cfspml(
  ******************************************************************************/
 
 int
-sv_eq1st_curv_col_ac_iso_rhs_src(
-    float *restrict hVx , float *restrict hVz ,
-    float *restrict hP, 
-    float *restrict jac3d, float *restrict slw3d,
-    src_t *src, // short nation for reference member
-    const int verbose)
+sv_curv_col_ac_iso_rhs_src(
+             float *restrict hVx , float *restrict hVz ,
+             float *restrict hP, 
+             float *restrict jac3d, float *restrict slw3d,
+             src_t *src, // short nation for reference member
+             const int verbose)
 {
   int ierr = 0;
 
