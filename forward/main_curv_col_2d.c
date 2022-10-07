@@ -68,7 +68,6 @@ int main(int argc, char** argv)
   blk_init(blk, verbose);
 
   fd_t            *fd            = blk->fd    ;
-  gdinfo_t        *gdinfo        = blk->gdinfo;
   gd_t            *gdcurv        = blk->gd;
   gdcurv_metric_t *gdcurv_metric = blk->gdcurv_metric;
   md_t            *md            = blk->md;
@@ -85,7 +84,7 @@ int main(int argc, char** argv)
   fd_set_macdrp(fd);
 
   // set gdinfo
-  gd_info_set(gdinfo, 
+  gd_indx_set(gdcurv, 
               par->number_of_total_grid_points_x,
               par->number_of_total_grid_points_z,
               fd->fdx_nghosts,
@@ -106,10 +105,10 @@ int main(int argc, char** argv)
   if (verbose>0) fprintf(stdout,"allocate grid vars ...\n"); 
 
   // malloc var in gdcurv
-  gd_curv_init(gdinfo, gdcurv);
+  gd_curv_init(gdcurv);
 
   // malloc var in gdcurv_metric
-  gd_curv_metric_init(gdinfo, gdcurv_metric);
+  gd_curv_metric_init(gdcurv, gdcurv_metric);
 
   // generate grid coord
   switch (par->grid_generation_itype)
@@ -124,7 +123,7 @@ int main(int argc, char** argv)
         float x0 = par->cartesian_grid_origin[0];
         float z0 = par->cartesian_grid_origin[1];
 
-        gd_curv_gen_cart(gdinfo,gdcurv,dx,x0,dz,z0);
+        gd_curv_gen_cart(gdcurv,dx,x0,dz,z0);
 
         break;
 
@@ -145,8 +144,8 @@ int main(int argc, char** argv)
 							par->number_of_total_grid_points_x,
 							par->number_of_total_grid_points_z,
 							gdcurv->x2d,  gdcurv->z2d,
-							gdinfo->nx, gdinfo->ni, gdinfo->gni1, fd->fdx_nghosts,
-							gdinfo->nz, gdinfo->nk, gdinfo->gnk1, fd->fdz_nghosts);
+							gdcurv->nx, gdcurv->ni, gdcurv->gni1, fd->fdx_nghosts,
+							gdcurv->nz, gdcurv->nk, gdcurv->gnk1, fd->fdz_nghosts);
 
       break;
   }
@@ -161,7 +160,7 @@ int main(int argc, char** argv)
   if (par->is_export_grid==1)
   {
     fprintf(stdout,"export coord to file ...\n"); 
-    gd_curv_coord_export(gdinfo, gdcurv,
+    gd_curv_coord_export(gdcurv,
                          blk->grid_export_dir);
   } else {
     fprintf(stdout,"do not export coord\n"); 
@@ -174,8 +173,7 @@ int main(int argc, char** argv)
     case PAR_METRIC_CALCULATE :
 
         if (verbose>0) fprintf(stdout,"calculate metrics ...\n"); 
-        gd_curv_metric_cal(gdinfo,
-                           gdcurv,
+        gd_curv_metric_cal(gdcurv,
                            gdcurv_metric,
                            fd->fdc_len,
                            fd->fdc_indx,
@@ -196,7 +194,7 @@ int main(int argc, char** argv)
   if (par->is_export_metric==1)
   {
     if (verbose>0) fprintf(stdout,"export metric to file ...\n"); 
-    gd_curv_metric_export(gdinfo,gdcurv_metric,
+    gd_curv_metric_export(gdcurv,gdcurv_metric,
                           blk->grid_export_dir);
   } else {
     if (verbose>0) fprintf(stdout,"do not export metric\n"); 
@@ -209,7 +207,7 @@ int main(int argc, char** argv)
 
   // allocate media vars
   if (verbose>0) {fprintf(stdout,"allocate media vars ...\n"); fflush(stdout);}
-  md_init(gdinfo, md, par->media_itype,  par->visco_itype);
+  md_init(gdcurv, md, par->media_itype,  par->visco_itype);
 
   // read or discrete velocity model
   switch (par->media_input_itype)
@@ -332,7 +330,7 @@ int main(int argc, char** argv)
   {
     if (verbose>0) fprintf(stdout,"export discrete medium to file ...\n"); 
 
-    md_export(gdinfo, md, blk->media_export_dir);
+    md_export(gdcurv, md, blk->media_export_dir);
   } else {
     if (verbose>0) fprintf(stdout,"do not export medium\n"); 
   }
@@ -352,7 +350,7 @@ int main(int argc, char** argv)
 
     //-- estimate time step
     fprintf(stdout,"   estimate time step ...\n"); 
-    blk_dt_esti_curv(gdinfo, gdcurv,md,fd->CFL,
+    blk_dt_esti_curv(gdcurv,md,fd->CFL,
             &dtmax, &dtmaxVp, &dtmaxL, &dtmaxi, &dtmaxk);
     
     //-- print for QC
@@ -385,7 +383,7 @@ int main(int argc, char** argv)
 //-- source import or locate on fly
 //-------------------------------------------------------------------------------
 
-  src_read_locate_file(gdinfo, gdcurv, src,
+  src_read_locate_file(gdcurv, src,
                        par->source_input_file,
                        t0, dt,
                        fd->num_rk_stages, fd->rk_rhs_time,
@@ -406,10 +404,10 @@ int main(int argc, char** argv)
   if (verbose>0) fprintf(stdout,"allocate solver vars ...\n"); 
   if (md->medium_type == CONST_MEDIUM_ACOUSTIC_ISO)
   {
-    wav_ac_init(gdinfo, wav, fd->num_rk_stages);
+    wav_ac_init(gdcurv, wav, fd->num_rk_stages);
   } else
   {
-    wav_init(gdinfo, wav, fd->num_rk_stages);
+    wav_init(gdcurv, wav, fd->num_rk_stages);
   }
 
 //-------------------------------------------------------------------------------
@@ -419,11 +417,11 @@ int main(int argc, char** argv)
   if (verbose>0) fprintf(stdout,"setup output info ...\n"); 
 
   // receiver: need to do
-  io_recv_read_locate(gdinfo, gdcurv, iorecv,
+  io_recv_read_locate(gdcurv, iorecv,
                       nt_total, wav->ncmp, par->in_station_file);
 
   // line
-  io_line_locate(gdinfo, gdcurv, ioline,
+  io_line_locate(gdcurv, ioline,
                  wav->ncmp,
                  nt_total,
                  par->number_of_receiver_line,
@@ -433,7 +431,7 @@ int main(int argc, char** argv)
                  par->receiver_line_name);
   
   // snapshot
-  io_snapshot_locate(gdinfo, iosnap,
+  io_snapshot_locate(gdcurv, iosnap,
                      par->number_of_snapshot,
                      par->snapshot_name,
                      par->snapshot_index_start,
@@ -452,7 +450,7 @@ int main(int argc, char** argv)
 
   if (verbose>0) fprintf(stdout,"setup boundary ...\n"); 
 
-  bdry_init(bdry, gdinfo->nx, gdinfo->nz);
+  bdry_init(bdry, gdcurv->nx, gdcurv->nz);
 
   //-- ade cfs-pml
   
@@ -460,7 +458,7 @@ int main(int argc, char** argv)
   {
     if (verbose>0) fprintf(stdout,"setup ade cfs-pml ...\n"); 
 
-    bdry_pml_set(gdinfo, gdcurv, wav, bdry,
+    bdry_pml_set(gdcurv, wav, bdry,
                  par->cfspml_is_sides,
                  par->abs_num_of_layers,
                  par->cfspml_alpha_max,
@@ -475,7 +473,7 @@ int main(int argc, char** argv)
   {
     if (verbose>0) fprintf(stdout,"setup sponge layer ...\n"); 
 
-    bdry_ablexp_set(gdinfo, gdcurv, wav, bdry,
+    bdry_ablexp_set(gdcurv, wav, bdry,
                     par->ablexp_is_sides,
                     par->abs_num_of_layers,
                     par->ablexp_velocity,
@@ -489,7 +487,7 @@ int main(int argc, char** argv)
   {
     if (verbose>0) fprintf(stdout,"cal free surface matrix ...\n"); 
 
-    bdry_free_set(gdinfo, bdry, par->free_is_sides, verbose);
+    bdry_free_set(gdcurv, bdry, par->free_is_sides, verbose);
   }
 
 //-------------------------------------------------------------------------------
@@ -500,7 +498,7 @@ int main(int argc, char** argv)
 
   blk_print(blk);
 
-  gd_info_print(gdinfo);
+  gd_print(gdcurv);
 
   iosnap_print(iosnap);
 
@@ -515,7 +513,7 @@ int main(int argc, char** argv)
   
   time_t t_start = time(NULL);
   
-  drv_rk_curv_col_allstep(fd,gdinfo,gdcurv_metric,md,
+  drv_rk_curv_col_allstep(fd,gdcurv,gdcurv_metric,md,
                           src,bdry,
                           wav, 
                           iorecv,ioline,iosnap,

@@ -7,7 +7,6 @@
 #include "fdlib_math.h"
 
 #include "fd_t.h"
-#include "gd_info.h"
 #include "gd_t.h"
 #include "md_t.h"
 #include "wav_t.h"
@@ -248,7 +247,7 @@ sv_curv_col_el_rhs_src(
 }
 
 int
-sv_curv_graves_Qs(float *w, int ncmp, float dt, gdinfo_t *gdinfo, md_t *md)
+sv_curv_graves_Qs(float *w, int ncmp, float dt, gd_t *gd, md_t *md)
 {
   int ierr = 0;
 
@@ -256,13 +255,13 @@ sv_curv_graves_Qs(float *w, int ncmp, float dt, gdinfo_t *gdinfo, md_t *md)
 
   for (int icmp=0; icmp<ncmp; icmp++)
   {
-    float *restrict var = w + icmp * gdinfo->siz_slice;
+    float *restrict var = w + icmp * gd->siz_slice;
 
-    for (int k = gdinfo->nk1; k <= gdinfo->nk2; k++)
+    for (int k = gd->nk1; k <= gd->nk2; k++)
     {
-        for (int i = gdinfo->ni1; i <= gdinfo->ni2; i++)
+        for (int i = gd->ni1; i <= gd->ni2; i++)
         {
-          size_t iptr = i + k * gdinfo->siz_line;
+          size_t iptr = i + k * gd->siz_line;
 
           float Qatt = expf( coef / md->Qs[iptr] );
 

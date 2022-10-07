@@ -23,8 +23,8 @@
 
 int
 drv_rk_curv_col_allstep(
-  fd_t            *fd,
-  gdinfo_t        *gdinfo,
+  fd_t        *fd,
+  gd_t        *gd,
   gdcurv_metric_t *metric,
   md_t      *md,
   src_t      *src,
@@ -101,15 +101,15 @@ drv_rk_curv_col_allstep(
   {
     if(md->medium_type == CONST_MEDIUM_ELASTIC_ISO)
     {
-      sv_curv_col_el_iso_dvh2dvz(gdinfo,metric,md,bdry,verbose);
+      sv_curv_col_el_iso_dvh2dvz(gd,metric,md,bdry,verbose);
     } 
     else if(md->medium_type == CONST_MEDIUM_ELASTIC_ANISO) 
     {
-      sv_curv_col_el_aniso_dvh2dvz(gdinfo,metric,md,bdry,verbose);
+      sv_curv_col_el_aniso_dvh2dvz(gd,metric,md,bdry,verbose);
     }
     if(md->medium_type == CONST_MEDIUM_ELASTIC_VTI)
     {
-      sv_curv_col_el_vti_dvh2dvz(gdinfo,metric,md,bdry,verbose);
+      sv_curv_col_el_vti_dvh2dvz(gd,metric,md,bdry,verbose);
     } 
     else if(md->medium_type == CONST_MEDIUM_ACOUSTIC_ISO) 
     {
@@ -172,7 +172,7 @@ drv_rk_curv_col_allstep(
       {
           sv_curv_col_el_iso_onestage(
               w_cur,w_rhs,wav,
-              gdinfo, metric, md, bdry, src,
+              gd, metric, md, bdry, src,
               fd->num_of_fdx_op, fd->pair_fdx_op[ipair][istage],
               fd->num_of_fdz_op, fd->pair_fdz_op[ipair][istage],
               fd->fdz_max_len,
@@ -181,7 +181,7 @@ drv_rk_curv_col_allstep(
       {
           sv_curv_col_el_vti_onestage(
               w_cur,w_rhs,wav,
-              gdinfo, metric, md, bdry, src,
+              gd, metric, md, bdry, src,
               fd->num_of_fdx_op, fd->pair_fdx_op[ipair][istage],
               fd->num_of_fdz_op, fd->pair_fdz_op[ipair][istage],
               fd->fdz_max_len,
@@ -190,7 +190,7 @@ drv_rk_curv_col_allstep(
       {
           sv_curv_col_el_aniso_onestage(
               w_cur,w_rhs,wav,
-              gdinfo, metric, md, bdry, src,
+              gd, metric, md, bdry, src,
               fd->num_of_fdx_op, fd->pair_fdx_op[ipair][istage],
               fd->num_of_fdz_op, fd->pair_fdz_op[ipair][istage],
               fd->fdz_max_len,
@@ -199,7 +199,7 @@ drv_rk_curv_col_allstep(
       {
           sv_curv_col_ac_iso_onestage(
               w_cur,w_rhs,wav,
-              gdinfo, metric, md, bdry, src,
+              gd, metric, md, bdry, src,
               fd->num_of_fdx_op, fd->pair_fdx_op[ipair][istage],
               fd->num_of_fdz_op, fd->pair_fdz_op[ipair][istage],
               fd->fdz_max_len,
@@ -219,7 +219,7 @@ drv_rk_curv_col_allstep(
 
         // apply Qs
         //if (md->visco_type == CONST_VISCO_GRAVES) {
-        //  sv_curv_graves_Qs(w_tmp, wave->ncmp, gdinfo, md);
+        //  sv_curv_graves_Qs(w_tmp, wave->ncmp, gd, md);
         //}
 
         // pml_tmp
@@ -268,7 +268,7 @@ drv_rk_curv_col_allstep(
 
         // apply Qs
         //if (md->visco_type == CONST_VISCO_GRAVES) {
-        //  sv_curv_graves_Qs(w_tmp, wave->ncmp, gdinfo, md);
+        //  sv_curv_graves_Qs(w_tmp, wave->ncmp, gd, md);
         //}
 
         // pml_tmp
@@ -316,7 +316,7 @@ drv_rk_curv_col_allstep(
 
         // apply Qs
         if (md->visco_type == CONST_VISCO_GRAVES_QS) {
-          sv_curv_graves_Qs(w_end, wav->ncmp, dt, gdinfo, md);
+          sv_curv_graves_Qs(w_end, wav->ncmp, dt, gd, md);
         }
         
         // pml_end
@@ -365,15 +365,15 @@ drv_rk_curv_col_allstep(
 
     // snapshot
     if (md->medium_type == CONST_MEDIUM_ACOUSTIC_ISO) {
-      io_snap_nc_put_ac(iosnap, &iosnap_nc, gdinfo, wav, 
+      io_snap_nc_put_ac(iosnap, &iosnap_nc, gd, wav, 
                      w_end, w_rhs, nt_total, it, t_end, 1,1,1);
     } else {
-      io_snap_nc_put(iosnap, &iosnap_nc, gdinfo, wav, 
+      io_snap_nc_put(iosnap, &iosnap_nc, gd, wav, 
                      w_end, w_rhs, nt_total, it, t_end, 1,1,1);
     }
 
     // zero temp used w_rsh
-    wav_zero_edge(gdinfo, wav, w_rhs);
+    wav_zero_edge(gd, wav, w_rhs);
 
     // swap w_pre and w_end, avoid copying
     w_cur = w_pre; w_pre = w_end; w_end = w_cur;

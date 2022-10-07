@@ -20,7 +20,7 @@
 #define M_gd_INDEX( i, k, ni ) ( ( i ) + ( k ) * ( ni ) )
 
 void 
-gd_curv_init(gdinfo_t *gdinfo, gd_t *gdcurv)
+gd_curv_init(gd_t *gdcurv)
 {
   /*
    * 0-2: x3d, y3d, z3d
@@ -29,9 +29,6 @@ gd_curv_init(gdinfo_t *gdinfo, gd_t *gdcurv)
   gdcurv->type = GD_TYPE_CURV;
 
   gdcurv->ncmp = CONST_NDIM;
-
-  gdcurv->nx   = gdinfo->nx;
-  gdcurv->nz   = gdinfo->nz;
 
   gdcurv->siz_line   = gdcurv->nx;
   gdcurv->siz_slice = gdcurv->nx * gdcurv->nz;
@@ -73,7 +70,7 @@ gd_curv_init(gdinfo_t *gdinfo, gd_t *gdcurv)
 }
 
 void 
-gd_curv_metric_init(gdinfo_t        *gdinfo,
+gd_curv_metric_init(gd_t        *gdcurv,
                     gdcurv_metric_t *metric)
 {
   const int num_grid_vars = 5; 
@@ -83,8 +80,8 @@ gd_curv_metric_init(gdinfo_t        *gdinfo,
    * 3-4: zeta_x, zeta_z
    */
 
-  metric->nx   = gdinfo->nx;
-  metric->nz   = gdinfo->nz;
+  metric->nx   = gdcurv->nx;
+  metric->nz   = gdcurv->nz;
   metric->ncmp = num_grid_vars;
 
   metric->siz_line   = metric->nx;
@@ -143,18 +140,17 @@ gd_curv_metric_init(gdinfo_t        *gdinfo,
 // need to change to use fdlib_math.c
 //
 void
-gd_curv_metric_cal(gdinfo_t        *gdinfo,
-                   gd_t        *gdcurv,
+gd_curv_metric_cal(gd_t        *gdcurv,
                    gdcurv_metric_t *metric,
                    int fd_len, int *restrict fd_indx, float *restrict fd_coef)
 {
-  int ni1 = gdinfo->ni1;
-  int ni2 = gdinfo->ni2;
-  int nk1 = gdinfo->nk1;
-  int nk2 = gdinfo->nk2;
-  int nx  = gdinfo->nx;
-  int nz  = gdinfo->nz;
-  size_t siz_line  = gdinfo->siz_line;
+  int ni1 = gdcurv->ni1;
+  int ni2 = gdcurv->ni2;
+  int nk1 = gdcurv->nk1;
+  int nk2 = gdcurv->nk2;
+  int nx  = gdcurv->nx;
+  int nz  = gdcurv->nz;
+  size_t siz_line  = gdcurv->siz_line;
 
   // point to each var
   float *restrict x2d  = gdcurv->x2d;
@@ -273,17 +269,15 @@ gd_curv_metric_cal(gdinfo_t        *gdinfo,
  * generate cartesian grid for curv struct
  */
 void
-gd_curv_gen_cart(
-  gdinfo_t *gdinfo,
-  gd_t *gdcurv,
-  float dx, float x0_glob,
-  float dz, float z0_glob)
+gd_curv_gen_cart(gd_t *gdcurv,
+                 float dx, float x0_glob,
+                 float dz, float z0_glob)
 {
   float *x3d = gdcurv->x2d;
   float *z3d = gdcurv->z2d;
 
-  float x0 = x0_glob + (0 - gdinfo->fdx_nghosts) * dx;
-  float z0 = z0_glob + (0 - gdinfo->fdz_nghosts) * dz;
+  float x0 = x0_glob + (0 - gdcurv->fdx_nghosts) * dx;
+  float z0 = z0_glob + (0 - gdcurv->fdz_nghosts) * dz;
 
   size_t iptr = 0;
   for (size_t k=0; k<gdcurv->nz; k++)
@@ -305,9 +299,9 @@ gd_curv_gen_cart(
  */
 
 void 
-gd_cart_init_set(gdinfo_t *gdinfo, gd_t *gdcart,
-  float dx, float x0_glob,
-  float dz, float z0_glob)
+gd_cart_init_set(gd_t *gdcart,
+                 float dx, float x0_glob,
+                 float dz, float z0_glob)
 {
   /*
    * 0-2: x3d, y3d, z3d
@@ -315,8 +309,8 @@ gd_cart_init_set(gdinfo_t *gdinfo, gd_t *gdcart,
 
   gdcart->type = GD_TYPE_CART;
 
-  gdcart->nx   = gdinfo->nx;
-  gdcart->nz   = gdinfo->nz;
+  gdcart->nx   = gdcart->nx;
+  gdcart->nz   = gdcart->nz;
   gdcart->ncmp = CONST_NDIM;
 
   gdcart->siz_line   = gdcart->nx;
@@ -332,8 +326,8 @@ gd_cart_init_set(gdinfo_t *gdinfo, gd_t *gdcart,
       fflush(stderr);
   }
 
-  float x0 = x0_glob + (0 - gdinfo->fdx_nghosts) * dx;
-  float z0 = z0_glob + (0 - gdinfo->fdz_nghosts) * dz;
+  float x0 = x0_glob + (0 - gdcart->fdx_nghosts) * dx;
+  float z0 = z0_glob + (0 - gdcart->fdz_nghosts) * dz;
 
   for (size_t k=0; k< gdcart->nz; k++)
   {
@@ -365,20 +359,18 @@ gd_cart_init_set(gdinfo_t *gdinfo, gd_t *gdcart,
 // input/output
 //
 void
-gd_curv_coord_export(
-  gdinfo_t *gdinfo,
-  gd_t *gdcurv,
-  char *output_dir)
+gd_curv_coord_export(gd_t *gdcurv,
+                     char *output_dir)
 {
   size_t *restrict c3d_pos   = gdcurv->cmp_pos;
   char  **restrict c3d_name  = gdcurv->cmp_name;
   int number_of_vars = gdcurv->ncmp;
   int  nx = gdcurv->nx;
   int  nz = gdcurv->nz;
-  int  ni1 = gdinfo->ni1;
-  int  nk1 = gdinfo->nk1;
-  int  ni  = gdinfo->ni;
-  int  nk  = gdinfo->nk;
+  int  ni1 = gdcurv->ni1;
+  int  nk1 = gdcurv->nk1;
+  int  ni  = gdcurv->ni;
+  int  nk  = gdcurv->nk;
 
   // construct file name
   char ou_file[CONST_MAX_STRLEN];
@@ -478,17 +470,15 @@ gd_curv_coord_import(gd_t *gdcurv, char *import_dir)
 }
 
 void
-gd_cart_coord_export(
-  gdinfo_t *gdinfo,
-  gd_t *gdcart,
-  char *output_dir)
+gd_cart_coord_export(gd_t *gdcart,
+                     char *output_dir)
 {
   int  nx = gdcart->nx;
   int  nz = gdcart->nz;
-  int  ni1 = gdinfo->ni1;
-  int  nk1 = gdinfo->nk1;
-  int  ni  = gdinfo->ni;
-  int  nk  = gdinfo->nk;
+  int  ni1 = gdcart->ni1;
+  int  nk1 = gdcart->nk1;
+  int  ni  = gdcart->ni;
+  int  nk  = gdcart->nk;
 
   // construct file name
   char ou_file[CONST_MAX_STRLEN];
@@ -540,7 +530,7 @@ gd_cart_coord_export(
 }
 
 void
-gd_curv_metric_export(gdinfo_t        *gdinfo,
+gd_curv_metric_export(gd_t        *gd,
                       gdcurv_metric_t *metric,
                       char *output_dir)
 {
@@ -549,10 +539,10 @@ gd_curv_metric_export(gdinfo_t        *gdinfo,
   int  number_of_vars = metric->ncmp;
   int  nx = metric->nx;
   int  nz = metric->nz;
-  int  ni1 = gdinfo->ni1;
-  int  nk1 = gdinfo->nk1;
-  int  ni  = gdinfo->ni;
-  int  nk  = gdinfo->nk;
+  int  ni1 = gd->ni1;
+  int  nk1 = gd->nk1;
+  int  ni  = gd->ni;
+  int  nk  = gd->nk;
 
   // construct file name
   char ou_file[CONST_MAX_STRLEN];
@@ -1221,12 +1211,11 @@ gd_curv_set_minmax(gd_t *gdcurv)
  */
 
 int
-gd_cart_coord_to_local_indx(gdinfo_t *gdinfo,
-                           gd_t *gdcart,
-                           float sx,
-                           float sz,
-                           int   *ou_si, int *ou_sk,
-                           float *ou_sx_inc, float *ou_sz_inc)
+gd_cart_coord_to_local_indx(gd_t *gdcart,
+                            float sx,
+                            float sz,
+                            int   *ou_si, int *ou_sk,
+                            float *ou_sx_inc, float *ou_sz_inc)
 {
   int ierr = 0;
 
@@ -1235,8 +1224,8 @@ gd_cart_coord_to_local_indx(gdinfo_t *gdinfo,
   float sx_inc = si_glob * gdcart->dx + gdcart->x0_glob - sx;
   float sz_inc = sk_glob * gdcart->dz + gdcart->z0_glob - sz;
 
-  *ou_si = si_glob + gdinfo->fdx_nghosts;
-  *ou_sk = sk_glob + gdinfo->fdz_nghosts;
+  *ou_si = si_glob + gdcart->fdx_nghosts;
+  *ou_sk = sk_glob + gdcart->fdz_nghosts;
   *ou_sx_inc = sx_inc;
   *ou_sz_inc = sz_inc;
 
@@ -1251,21 +1240,20 @@ gd_cart_coord_to_local_indx(gdinfo_t *gdinfo,
  */
 
 int
-gd_curv_coord_to_local_indx(gdinfo_t *gdinfo,
-                        gd_t *gd,
-                        float sx, float sz,
-                        int *si, int *sk,
-                        float *sx_inc, float *sz_inc) 
+gd_curv_coord_to_local_indx(gd_t *gd,
+                            float sx, float sz,
+                            int *si, int *sk,
+                            float *sx_inc, float *sz_inc) 
 {
   int is_here = 0; // default outside
 
-  int nx = gdinfo->nx;
-  int nz = gdinfo->nz;
-  int ni1 = gdinfo->ni1;
-  int ni2 = gdinfo->ni2;
-  int nk1 = gdinfo->nk1;
-  int nk2 = gdinfo->nk2;
-  size_t siz_line = gdinfo->siz_line;
+  int nx = gd->nx;
+  int nz = gd->nz;
+  int ni1 = gd->ni1;
+  int ni2 = gd->ni2;
+  int nk1 = gd->nk1;
+  int nk2 = gd->nk2;
+  size_t siz_line = gd->siz_line;
 
   float *restrict x3d = gd->x2d;
   float *restrict z3d = gd->z2d;
@@ -1532,3 +1520,152 @@ gd_coord_get_z(gd_t *gd, int i, int k)
 
   return var;
 }
+
+//
+// set grid size
+//
+
+int
+gd_indx_set(gd_t *const gd,
+            const int number_of_total_grid_points_x,
+            const int number_of_total_grid_points_z,
+            const int fdx_nghosts,
+            const int fdz_nghosts,
+            const int verbose)
+{
+  int ierr = 0;
+
+  int ni = number_of_total_grid_points_x;
+  int nk = number_of_total_grid_points_z;
+  
+  // add ghost points
+  int nx = ni + 2 * fdx_nghosts;
+  int nz = nk + 2 * fdz_nghosts;
+
+  gd->ni = ni;
+  gd->nk = nk;
+
+  gd->nx = nx;
+  gd->nz = nz;
+
+  gd->ni1 = fdx_nghosts;
+  gd->ni2 = gd->ni1 + ni - 1;
+
+  gd->nk1 = fdz_nghosts;
+  gd->nk2 = gd->nk1 + nk - 1;
+
+  gd->gni1 = 0;
+  gd->gni2 = gd->gni1 + ni - 1;
+
+  gd->gnk1 = 0;
+  gd->gnk2 = gd->gnk1 + nk - 1;
+
+  gd->siz_line  = gd->nx;
+  gd->siz_slice = gd->nx * gd->nz;
+
+  // set npoint_ghosts according to fdz_nghosts
+  gd->npoint_ghosts = fdz_nghosts;
+
+  gd->fdx_nghosts = fdx_nghosts;
+  gd->fdz_nghosts = fdz_nghosts;
+
+  gd->index_name = fdlib_mem_malloc_2l_char(
+                        CONST_NDIM, CONST_MAX_STRLEN, "gd name");
+
+  // grid coord name
+  sprintf(gd->index_name[0],"%s","i");
+  sprintf(gd->index_name[1],"%s","k");
+
+  return ierr;
+}
+
+/*
+ * give a local index ref, check if in this thread
+ */
+
+int
+gd_lindx_is_inner(int i, int k, gd_t *gd)
+{
+  int is_in = 0;
+
+  if (   i >= gd->ni1 && i <= gd->ni2
+      && k >= gd->nk1 && k <= gd->nk2)
+  {
+    is_in = 1;
+  }
+
+  return is_in;
+}  
+
+int
+gd_pindx_is_inner(int i_phy, int k_phy, gd_t *gd)
+{
+  int is_in = 0;
+
+  int i = i_phy + gd->fdx_nghosts;
+  int k = k_phy + gd->fdz_nghosts;
+
+  if (   i >= gd->ni1 && i <= gd->ni2
+      && k >= gd->nk1 && k <= gd->nk2)
+  {
+    is_in = 1;
+  }
+
+  return is_in;
+}  
+
+int
+gd_pindx_is_inner_i(int i_phy, gd_t *gd)
+{
+  int is_in = 0;
+
+  int i = i_phy + gd->fdx_nghosts;
+
+  if (   i >= gd->ni1 && i <= gd->ni2)
+  {
+    is_in = 1;
+  }
+
+  return is_in;
+}  
+
+int
+gd_pindx_is_inner_k(int k_phy, gd_t *gd)
+{
+  int is_in = 0;
+
+  int k = k_phy + gd->fdz_nghosts;
+
+  if ( k >= gd->nk1 && k <= gd->nk2)
+  {
+    is_in = 1;
+  }
+
+  return is_in;
+}  
+
+/*
+ * print for QC
+ */
+
+int
+gd_print(gd_t *gd)
+{    
+  fprintf(stdout, "-------------------------------------------------------\n");
+  fprintf(stdout, "--> grid info:\n");
+  fprintf(stdout, "-------------------------------------------------------\n");
+  fprintf(stdout, " nx    = %-10d\n", gd->nx);
+  fprintf(stdout, " nz    = %-10d\n", gd->nz);
+  fprintf(stdout, " ni    = %-10d\n", gd->ni);
+  fprintf(stdout, " nk    = %-10d\n", gd->nk);
+
+  fprintf(stdout, " ni1   = %-10d\n", gd->ni1);
+  fprintf(stdout, " ni2   = %-10d\n", gd->ni2);
+  fprintf(stdout, " nk1   = %-10d\n", gd->nk1);
+  fprintf(stdout, " nk2   = %-10d\n", gd->nk2);
+
+  return 0;
+}
+
+
+

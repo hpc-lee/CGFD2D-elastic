@@ -2,7 +2,6 @@
 #define IO_FUNCS_H
 
 #include "constants.h"
-#include "gd_info.h"
 #include "gd_t.h"
 #include "io_funcs.h"
 #include "wav_t.h"
@@ -100,16 +99,14 @@ iosnap_nc_t;
  *************************************************/
 
 int
-io_recv_read_locate(gdinfo_t *gdinfo,
-                    gd_t *gd,
+io_recv_read_locate(gd_t *gd,
                     iorecv_t  *iorecv,
                     int       nt_total,
                     int       num_of_vars,
                     char *in_filenm);
 
 int
-io_line_locate(gdinfo_t *gdinfo,
-               gd_t *gd,
+io_line_locate(gd_t *gd,
                ioline_t *ioline,
                int    num_of_vars,
                int    nt_total,
@@ -120,7 +117,7 @@ io_line_locate(gdinfo_t *gdinfo,
                char **receiver_line_name);
 
 int
-io_snapshot_locate(gdinfo_t *gdinfo,
+io_snapshot_locate(gd_t *gd,
                    iosnap_t *iosnap,
                     int  number_of_snapshot,
                     char **snapshot_name,
@@ -140,7 +137,7 @@ io_snap_nc_create(iosnap_t *iosnap, iosnap_nc_t *iosnap_nc);
 int
 io_snap_nc_put(iosnap_t *iosnap,
                iosnap_nc_t *iosnap_nc,
-               gdinfo_t    *gdinfo,
+               gd_t    *gd,
                wav_t   *wav,
                float *restrict w4d,
                float *restrict buff,
@@ -157,7 +154,7 @@ io_snap_nc_create_ac(iosnap_t *iosnap, iosnap_nc_t *iosnap_nc);
 int
 io_snap_nc_put_ac(iosnap_t *iosnap,
                iosnap_nc_t *iosnap_nc,
-               gdinfo_t    *gdinfo,
+               gd_t    *gd,
                wav_t   *wav,
                float *restrict w4d,
                float *restrict buff,

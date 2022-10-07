@@ -22,7 +22,6 @@ blk_init(blk_t *blk, const int verbose)
 
   // alloc struct vars
   blk->fd            = (fd_t *)malloc(sizeof(fd_t));
-  blk->gdinfo        = (gdinfo_t *)malloc(sizeof(gdinfo_t));
   blk->gd            = (gd_t        *)malloc(sizeof(gd_t     ));
   blk->gdcurv_metric = (gdcurv_metric_t *)malloc(sizeof(gdcurv_metric_t));
   blk->md            = (md_t      *)malloc(sizeof(md_t     ));
@@ -170,9 +169,9 @@ blk_print(blk_t *blk)
  *********************************************************************/
 
 int
-blk_dt_esti_curv(gdinfo_t *gdinfo, gd_t *gdcurv, md_t *md,
-    float CFL, float *dtmax, float *dtmaxVp, float *dtmaxL,
-    int *dtmaxi, int *dtmaxk)
+blk_dt_esti_curv(gd_t *gdcurv, md_t *md,
+                 float CFL, float *dtmax, float *dtmaxVp, float *dtmaxL,
+                 int *dtmaxi, int *dtmaxk)
 {
   int ierr = 0;
 
@@ -182,11 +181,11 @@ blk_dt_esti_curv(gdinfo_t *gdinfo, gd_t *gdcurv, md_t *md,
   float *restrict x2d = gdcurv->x2d;
   float *restrict z2d = gdcurv->z2d;
 
-  for (int k = gdinfo->nk1; k <= gdinfo->nk2; k++)
+  for (int k = gdcurv->nk1; k <= gdcurv->nk2; k++)
   {
-      for (int i = gdinfo->ni1; i <= gdinfo->ni2; i++)
+      for (int i = gdcurv->ni1; i <= gdcurv->ni2; i++)
       {
-        size_t iptr = i + k * gdinfo->siz_line;
+        size_t iptr = i + k * gdcurv->siz_line;
 
         if (md->medium_type == CONST_MEDIUM_ELASTIC_ISO) {
           Vp = sqrt( (md->lambda[iptr] + 2.0 * md->mu[iptr]) / md->rho[iptr] );
@@ -211,8 +210,8 @@ blk_dt_esti_curv(gdinfo_t *gdinfo, gd_t *gdcurv, md_t *md,
               if (ii != 0 && kk != 0)
               {
                 float p1[] = { x2d[iptr-ii], z2d[iptr-ii] };
-                float p2[] = { x2d[iptr-kk*gdinfo->siz_line],
-                               z2d[iptr-kk*gdinfo->siz_line] };
+                float p2[] = { x2d[iptr-kk*gdcurv->siz_line],
+                               z2d[iptr-kk*gdcurv->siz_line] };
 
                 float L = fdlib_math_dist_point2line(x0, z0, p1, p2);
 
@@ -241,9 +240,9 @@ blk_dt_esti_curv(gdinfo_t *gdinfo, gd_t *gdcurv, md_t *md,
 }
 
 int
-blk_dt_esti_cart(gdinfo_t *gdinfo, gd_t *gdcart, md_t *md,
-    float CFL, float *dtmax, float *dtmaxVp, float *dtmaxL,
-    int *dtmaxi, int *dtmaxk)
+blk_dt_esti_cart(gd_t *gdcart, md_t *md,
+                 float CFL, float *dtmax, float *dtmaxVp, float *dtmaxL,
+                 int *dtmaxi, int *dtmaxk)
 {
   int ierr = 0;
 
@@ -259,11 +258,11 @@ blk_dt_esti_cart(gdinfo_t *gdinfo, gd_t *gdcart, md_t *md,
 
   float dtLe = fdlib_math_dist_point2line(0.0,0.0, p1, p2);
 
-  for (int k = gdinfo->nk1; k <= gdinfo->nk2; k++)
+  for (int k = gdcart->nk1; k <= gdcart->nk2; k++)
   {
-      for (int i = gdinfo->ni1; i <= gdinfo->ni2; i++)
+      for (int i = gdcart->ni1; i <= gdcart->ni2; i++)
       {
-        size_t iptr = i + k * gdinfo->siz_line;
+        size_t iptr = i + k * gdcart->siz_line;
 
         if (md->medium_type == CONST_MEDIUM_ELASTIC_ISO) {
           Vp = sqrt( (md->lambda[iptr] + 2.0 * md->mu[iptr]) / md->rho[iptr] );

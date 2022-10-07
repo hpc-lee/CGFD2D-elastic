@@ -2,7 +2,6 @@
 #define BDRY_H
 
 #include "constants.h"
-#include "gd_info.h"
 #include "gd_t.h"
 #include "wav_t.h"
 
@@ -121,14 +120,13 @@ int
 bdry_init(bdry_t *bdry, int nx, int nz);
 
 int
-bdry_free_set(gdinfo_t    *gdinfo,
-              bdry_t      *bdryfree,
+bdry_free_set(gd_t    *gd,
+              bdry_t  *bdryfree,
               int   in_is_sides[][2],
               const int verbose);
 
 int
-bdry_pml_set(gdinfo_t *gdinfo,
-             gd_t     *gd,
+bdry_pml_set(gd_t     *gd,
              wav_t    *wav,
              bdry_t   *bdrypml,
              int   in_is_sides[][2],
@@ -170,8 +168,7 @@ bdry_cal_abl_len_dh(gd_t *gd,
                     float *avg_L, float *avg_dh);
 
 int
-bdry_ablexp_set(gdinfo_t *gdinfo,
-                gd_t *gd,
+bdry_ablexp_set(gd_t *gd,
                 wav_t *wav,
                 bdry_t *bdryexp,
                 int   in_is_sides[][2],

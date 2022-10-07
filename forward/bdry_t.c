@@ -39,14 +39,14 @@ bdry_init(bdry_t *bdry, int nx, int nz)
  */
 
 int
-bdry_free_set(gdinfo_t    *gdinfo,
+bdry_free_set(gd_t    *gd,
               bdry_t      *bdryfree,
               int   in_is_sides[][2],
               const int verbose)
 {
   int ierr = 0;
 
-  size_t siz_line  = gdinfo->siz_line;
+  size_t siz_line  = gd->siz_line;
 
   // default disable
   bdryfree->is_enable_free = 0;
@@ -80,8 +80,7 @@ bdry_free_set(gdinfo_t    *gdinfo,
 
 
 int
-bdry_pml_set(gdinfo_t *gdinfo,
-             gd_t     *gd,
+bdry_pml_set(gd_t     *gd,
              wav_t    *wav,
              bdry_t   *bdrypml,
              int   in_is_sides[][2],
@@ -91,13 +90,13 @@ bdry_pml_set(gdinfo_t *gdinfo,
              float in_velocity[][2], //
              int verbose)
 {
-  int    ni1 = gdinfo->ni1;
-  int    ni2 = gdinfo->ni2;
-  int    nk1 = gdinfo->nk1;
-  int    nk2 = gdinfo->nk2;
-  int    nx  = gdinfo->nx ;
-  int    nz  = gdinfo->nz ;
-  int    siz_line = gdinfo->siz_line;
+  int    ni1 = gd->ni1;
+  int    ni2 = gd->ni2;
+  int    nk1 = gd->nk1;
+  int    nk2 = gd->nk2;
+  int    nx  = gd->nx ;
+  int    nz  = gd->nz ;
+  int    siz_line = gd->siz_line;
 
   // default disable
   bdrypml->is_enable_pml = 0;
@@ -404,8 +403,7 @@ bdry_cal_abl_len_dh(gd_t *gd,
  */
 
 int
-bdry_ablexp_set(gdinfo_t *gdinfo,
-                gd_t *gd,
+bdry_ablexp_set(gd_t *gd,
                 wav_t *wav,
                 bdry_t *bdryexp,
                 int   in_is_sides[][2],
@@ -416,15 +414,15 @@ bdry_ablexp_set(gdinfo_t *gdinfo,
 {
   int    ierr = 0;
 
-  int    ni1 = gdinfo->ni1;
-  int    ni2 = gdinfo->ni2;
-  int    nk1 = gdinfo->nk1;
-  int    nk2 = gdinfo->nk2;
-  int    ni  = gdinfo->ni ;
-  int    nk  = gdinfo->nk ;
-  int    nx  = gdinfo->nx ;
-  int    nz  = gdinfo->nz ;
-  int    siz_line = gdinfo->siz_line;
+  int    ni1 = gd->ni1;
+  int    ni2 = gd->ni2;
+  int    nk1 = gd->nk1;
+  int    nk2 = gd->nk2;
+  int    ni  = gd->ni ;
+  int    nk  = gd->nk ;
+  int    nx  = gd->nx ;
+  int    nz  = gd->nz ;
+  int    siz_line = gd->siz_line;
   int    abs_number[CONST_NDIM][2];
 
   int n;

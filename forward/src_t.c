@@ -84,8 +84,7 @@ src_set_time(src_t *src, int it, int istage)
  */
 
 int
-src_read_locate_file(gdinfo_t *gdinfo,
-                     gd_t     *gd,
+src_read_locate_file(gd_t     *gd,
                      src_t    *src,
                      char     *in_src_file,
                      float     t0,
@@ -97,15 +96,15 @@ src_read_locate_file(gdinfo_t *gdinfo,
 {
   int ierr = 0;
 
-  // get grid info from gdinfo
-  int   ni1 = gdinfo->ni1;
-  int   ni2 = gdinfo->ni2;
-  int   nk1 = gdinfo->nk1;
-  int   nk2 = gdinfo->nk2;
-  int   nx  = gdinfo->nx ;
-  int   nz  = gdinfo->nz ;
-  int   npoint_ghosts = gdinfo->npoint_ghosts;
-  size_t siz_line= gdinfo->siz_line;
+  // get grid info from gd
+  int   ni1 = gd->ni1;
+  int   ni2 = gd->ni2;
+  int   nk1 = gd->nk1;
+  int   nk2 = gd->nk2;
+  int   nx  = gd->nx ;
+  int   nz  = gd->nz ;
+  int   npoint_ghosts = gd->npoint_ghosts;
+  size_t siz_line= gd->siz_line;
 
   // get total elem of exted src region for a single point
   int len_ext = 2*npoint_half_ext+1;
@@ -204,18 +203,18 @@ src_read_locate_file(gdinfo_t *gdinfo,
         {
           // if sz is depth, convert to axis when it is in this thread
           if (is_depth == 1) {
-            //gd_curv_depth_to_axis(gdinfo,gd,sx,&sz);
+            //gd_curv_depth_to_axis(gd,sx,&sz);
           }
-          gd_curv_coord_to_local_indx(gdinfo,gd,sx,sz,
+          gd_curv_coord_to_local_indx(gd,sx,sz,
                                       &si,&sk,&sx_inc,&sz_inc);
         }
         else if (gd->type == GD_TYPE_CART)
         {
           // if sz is depth, convert to axis
           if (is_depth == 1) {
-            sz = gd->z1d[gdinfo->nk2] - sz;
+            sz = gd->z1d[gd->nk2] - sz;
           }
-          gd_cart_coord_to_local_indx(gdinfo,gd,sx,sz,
+          gd_cart_coord_to_local_indx(gd,sx,sz,
                                       &si,&sk,&sx_inc,&sz_inc);
         }
         // keep index to avoid duplicat run
@@ -234,11 +233,11 @@ src_read_locate_file(gdinfo_t *gdinfo,
       else // computational coordinate or grid index
       {
         // add ghosts, to local point
-        sx = sx + gdinfo->fdx_nghosts;
-        sz = sz + gdinfo->fdz_nghosts;
+        sx = sx + gd->fdx_nghosts;
+        sz = sz + gd->fdz_nghosts;
         // if sz is relative to surface, convert to normal index
         if (is_depth == 1) {
-          sz = gdinfo->nk2 - sz;
+          sz = gd->nk2 - sz;
         }
 
         // nearest integer index
@@ -256,7 +255,7 @@ src_read_locate_file(gdinfo_t *gdinfo,
     }
 
     // check if in this thread using index
-    if (gd_info_lindx_is_inner(si,sk,gdinfo)==1)
+    if (gd_lindx_is_inner(si,sk,gd)==1)
     {
       num_of_src_here += 1;
       all_in_thread[is] = 1;
@@ -422,7 +421,7 @@ src_read_locate_file(gdinfo_t *gdinfo,
       {
         for (int i=si-npoint_half_ext; i<=si+npoint_half_ext; i++)
         {
-          if (gd_info_lindx_is_inner(i,k,gdinfo)==1)
+          if (gd_lindx_is_inner(i,k,gd)==1)
           {
             // Note index need match coef
             int iptr_grid = i + k * siz_line;

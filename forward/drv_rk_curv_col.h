@@ -2,7 +2,6 @@
 #define DRV_RK_CURV_COL_H
 
 #include "fd_t.h"
-#include "gd_info.h"
 #include "gd_t.h"
 #include "md_t.h"
 #include "wav_t.h"
@@ -16,8 +15,8 @@
 
 int
 drv_rk_curv_col_allstep(
-  fd_t            *fd,
-  gdinfo_t        *gdinfo,
+  fd_t        *fd,
+  gd_t        *gd,
   gdcurv_metric_t *metric,
   md_t      *md,
   src_t      *src,

@@ -3,7 +3,6 @@
 
 #include "constants.h"
 #include "fd_t.h"
-#include "gd_info.h"
 #include "gd_t.h"
 #include "md_t.h"
 #include "wav_t.h"
@@ -25,10 +24,6 @@ typedef struct
 
   // fd
   fd_t    *fd;     // collocated grid fd
-  fdstg_t *fdstg;  // staggered gridfd
-
-  // grid index info
-  gdinfo_t *gdinfo;
   
   // coordnate: x3d, y3d, z3d
   gd_t *gd;
@@ -86,14 +81,14 @@ int
 blk_print(blk_t *blk);
 
 int
-blk_dt_esti_curv(gdinfo_t *gdinfo, gd_t *gdcurv, md_t *md,
-    float CFL, float *dtmax, float *dtmaxVp, float *dtmaxL,
-    int *dtmaxi, int *dtmaxk);
+blk_dt_esti_curv(gd_t *gdcurv, md_t *md,
+                 float CFL, float *dtmax, float *dtmaxVp, float *dtmaxL,
+                 int *dtmaxi, int *dtmaxk);
 
 int
-blk_dt_esti_cart(gdinfo_t *gdinfo, gd_t *gdcart, md_t *md,
-    float CFL, float *dtmax, float *dtmaxVp, float *dtmaxL,
-    int *dtmaxi, int *dtmaxk);
+blk_dt_esti_cart(gd_t *gdcart, md_t *md,
+                 float CFL, float *dtmax, float *dtmaxVp, float *dtmaxL,
+                 int *dtmaxi, int *dtmaxk);
 
 float
 blk_keep_two_digi(float dt);

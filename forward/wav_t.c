@@ -11,17 +11,17 @@
 #include "wav_t.h"
 
 int 
-wav_init(gdinfo_t *gdinfo,
-               wav_t *V,
-               int number_of_levels)
+wav_init(gd_t *gd,
+         wav_t *V,
+         int number_of_levels)
 {
   int ierr = 0;
 
   // Vx,Vz,Txx,Tzz,Txz
   V->ncmp = 5;
 
-  V->nx   = gdinfo->nx;
-  V->nz   = gdinfo->nz;
+  V->nx   = gd->nx;
+  V->nz   = gd->nz;
   V->nlevel = number_of_levels;
 
   V->siz_line   = V->nx;
@@ -86,17 +86,17 @@ wav_init(gdinfo_t *gdinfo,
 }
 
 int 
-wav_ac_init(gdinfo_t *gdinfo,
-               wav_t *V,
-               int number_of_levels)
+wav_ac_init(gd_t *gd,
+            wav_t *V,
+            int number_of_levels)
 {
   int ierr = 0;
 
   // Vx,Vz,P
   V->ncmp = 3;
 
-  V->nx   = gdinfo->nx;
-  V->nz   = gdinfo->nz;
+  V->nx   = gd->nx;
+  V->nz   = gd->nz;
   V->nlevel = number_of_levels;
 
   V->siz_line   = V->nx;
@@ -173,7 +173,7 @@ wav_check_value(float *restrict w, wav_t *wav)
 }
 
 int
-wav_zero_edge(gdinfo_t *gdinfo, wav_t *wav, float *restrict w4d)
+wav_zero_edge(gd_t *gd, wav_t *wav, float *restrict w4d)
 {
   int ierr = 0;
 
@@ -182,10 +182,10 @@ wav_zero_edge(gdinfo_t *gdinfo, wav_t *wav, float *restrict w4d)
     float *restrict var = w4d + wav->cmp_pos[icmp];
 
     // z1
-    for (int k=0; k < gdinfo->nk1; k++)
+    for (int k=0; k < gd->nk1; k++)
     {
-      size_t iptr_k = k * gdinfo->siz_line;
-        for (int i=0; i < gdinfo->nx; i++)
+      size_t iptr_k = k * gd->siz_line;
+        for (int i=0; i < gd->nx; i++)
         {
           size_t iptr = iptr_k + i;
           var[iptr] = 0.0; 
@@ -193,10 +193,10 @@ wav_zero_edge(gdinfo_t *gdinfo, wav_t *wav, float *restrict w4d)
     }
 
     // z2
-    for (int k=gdinfo->nk2+1; k < gdinfo->nz; k++)
+    for (int k=gd->nk2+1; k < gd->nz; k++)
     {
-      size_t iptr_k = k * gdinfo->siz_line;
-        for (int i=0; i < gdinfo->nx; i++)
+      size_t iptr_k = k * gd->siz_line;
+        for (int i=0; i < gd->nx; i++)
         {
           size_t iptr = iptr_k + i;
           var[iptr] = 0.0; 
@@ -204,10 +204,10 @@ wav_zero_edge(gdinfo_t *gdinfo, wav_t *wav, float *restrict w4d)
     }
 
     // x1
-    for (int k = gdinfo->nk1; k <= gdinfo->nk2; k++)
+    for (int k = gd->nk1; k <= gd->nk2; k++)
     {
-      size_t iptr_k = k * gdinfo->siz_line;
-        for (int i=0; i < gdinfo->ni1; i++)
+      size_t iptr_k = k * gd->siz_line;
+        for (int i=0; i < gd->ni1; i++)
         {
           size_t iptr = iptr_k + i;
           var[iptr] = 0.0; 
@@ -215,10 +215,10 @@ wav_zero_edge(gdinfo_t *gdinfo, wav_t *wav, float *restrict w4d)
     } 
 
     // x2
-    for (int k = gdinfo->nk1; k <= gdinfo->nk2; k++)
+    for (int k = gd->nk1; k <= gd->nk2; k++)
     {
-      size_t iptr_k = k * gdinfo->siz_line;
-        for (int i = gdinfo->ni2+1; i < gdinfo->nx; i++)
+      size_t iptr_k = k * gd->siz_line;
+        for (int i = gd->ni2+1; i < gd->nx; i++)
         {
           size_t iptr = iptr_k + i;
           var[iptr] = 0.0; 

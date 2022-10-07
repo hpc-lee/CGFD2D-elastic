@@ -1,7 +1,7 @@
 #ifndef MD_EL_ISO_H
 #define MD_EL_ISO_H
 
-#include "gd_info.h"
+#include "gd_t.h"
 
 /*************************************************
  * structure
@@ -52,15 +52,15 @@ typedef struct {
  *************************************************/
 
 int
-md_init(gdinfo_t *gdinfo, md_t *md, int media_type, int visco_type);
+md_init(gd_t *gd, md_t *md, int media_type, int visco_type);
 
 int
 md_import(md_t *md, char *in_dir);
 
 int
-md_export(gdinfo_t  *gdinfo,
-                 md_t *md,
-                 char *output_dir);
+md_export(gd_t *gd,
+          md_t *md,
+          char *output_dir);
 
 int
 md_gen_test_ac_iso(md_t *md);

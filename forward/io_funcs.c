@@ -10,7 +10,6 @@
 #include "fdlib_mem.h"
 #include "constants.h"
 #include "fd_t.h"
-#include "gd_info.h"
 #include "io_funcs.h"
 
 //#define M_NCERR(ierr) {fprintf(stderr,"sv_ nc error: %s\n", nc_strerror(ierr)); exit(1);}
@@ -22,8 +21,7 @@
  * read in station list file and locate station
  */
 int
-io_recv_read_locate(gdinfo_t *gdinfo,
-                    gd_t *gd,
+io_recv_read_locate(gd_t *gd,
                     iorecv_t  *iorecv,
                     int       nt_total,
                     int       num_of_vars,
@@ -72,11 +70,11 @@ io_recv_read_locate(gdinfo_t *gdinfo,
     if (is_coord == 0)
     {
       // add ghosts, to local point
-      rx = rx + gdinfo->fdx_nghosts;
-      rz = rz + gdinfo->fdz_nghosts;
+      rx = rx + gd->fdx_nghosts;
+      rz = rz + gd->fdz_nghosts;
       // if sz is relative to surface, convert to normal index
       if (is_depth == 1) {
-        rz = gdinfo->nk2 - rz;
+        rz = gd->nk2 - rz;
       }
 
       // do not take nearest value, but use smaller value
@@ -93,18 +91,18 @@ io_recv_read_locate(gdinfo_t *gdinfo,
       {
         // if rz is depth, convert to axis when it is in this thread
         if (is_depth == 1) {
-          //gd_curv_depth_to_axis(gdinfo,gd,rx,&rz);
+          //gd_curv_depth_to_axis(gd,rx,&rz);
         }
-        gd_curv_coord_to_local_indx(gdinfo,gd,rx,rz,
+        gd_curv_coord_to_local_indx(gd,rx,rz,
                                &ix,&iz,&rx_inc,&rz_inc);
       }
       else if (gd->type == GD_TYPE_CART)
       {
         // if sz is depth, convert to axis
         if (is_depth == 1) {
-          rz = gd->z1d[gdinfo->nk2] - rz;
+          rz = gd->z1d[gd->nk2] - rz;
         }
-        gd_cart_coord_to_local_indx(gdinfo,gd,rx,rz,
+        gd_cart_coord_to_local_indx(gd,rx,rz,
                                &ix,&iz,&rx_inc,&rz_inc);
       }
 
@@ -118,7 +116,7 @@ io_recv_read_locate(gdinfo_t *gdinfo,
       }
     }
 
-    if (gd_info_lindx_is_inner(ix,iz,gdinfo) == 1)
+    if (gd_lindx_is_inner(ix,iz,gd) == 1)
     {
       // index, to get coord
       if (is_coord == 0)
@@ -166,8 +164,7 @@ io_recv_read_locate(gdinfo_t *gdinfo,
   return 0;
 }
 
-int io_line_locate(gdinfo_t *gdinfo,
-                   gd_t *gd,
+int io_line_locate(gd_t *gd,
                    ioline_t *ioline,
                    int    num_of_vars,
                    int    nt_total,
@@ -200,7 +197,7 @@ int io_line_locate(gdinfo_t *gdinfo,
       int gk = receiver_line_index_start[n*CONST_NDIM+1] 
                  + ipt * receiver_line_index_incre[n*CONST_NDIM+1];
 
-      if (gd_info_pindx_is_inner(gi,gk,gdinfo) == 1)
+      if (gd_pindx_is_inner(gi,gk,gd) == 1)
       {
         nr += 1;
       }
@@ -255,10 +252,10 @@ int io_line_locate(gdinfo_t *gdinfo,
       int gi = receiver_line_index_start[n*CONST_NDIM+0] + ipt * receiver_line_index_incre[n*CONST_NDIM  ];
       int gk = receiver_line_index_start[n*CONST_NDIM+1] + ipt * receiver_line_index_incre[n*CONST_NDIM+1];
 
-      if (gd_info_pindx_is_inner(gi,gk,gdinfo) == 1)
+      if (gd_pindx_is_inner(gi,gk,gd) == 1)
       {
-        int i = gi + gdinfo->fdx_nghosts;
-        int k = gk + gdinfo->fdz_nghosts;
+        int i = gi + gd->fdx_nghosts;
+        int k = gk + gd->fdz_nghosts;
 
         int iptr = i + k * gd->siz_line;
 
@@ -277,7 +274,7 @@ int io_line_locate(gdinfo_t *gdinfo,
 }
 
 int
-io_snapshot_locate(gdinfo_t *gdinfo,
+io_snapshot_locate(gd_t *gd,
                    iosnap_t *iosnap,
                     int  number_of_snapshot,
                     char **snapshot_name,
@@ -327,7 +324,7 @@ io_snapshot_locate(gdinfo_t *gdinfo,
     for (int n3=0; n3<snapshot_index_count[iptr0+1]; n3++)
     {
       int gk = snapshot_index_start[iptr0+1] + n3 * snapshot_index_incre[iptr0+1];
-      if (gd_info_pindx_is_inner_k(gk,gdinfo) == 1)
+      if (gd_pindx_is_inner_k(gk,gd) == 1)
       {
         // first valid k
         if (gk1 == -1) {
@@ -336,7 +333,7 @@ io_snapshot_locate(gdinfo_t *gdinfo,
         }
         ngk++;
       }
-      if (gk > gdinfo->nk-1) break; // no need to larger k
+      if (gk > gd->nk-1) break; // no need to larger k
     }
 
     // scan output i-index in this proc
@@ -344,7 +341,7 @@ io_snapshot_locate(gdinfo_t *gdinfo,
     for (int n1=0; n1<snapshot_index_count[iptr0+0]; n1++)
     {
       int gi = snapshot_index_start[iptr0+0] + n1 * snapshot_index_incre[iptr0+0];
-      if (gd_info_pindx_is_inner_i(gi,gdinfo) == 1)
+      if (gd_pindx_is_inner_i(gi,gd) == 1)
       {
         if (gi1 == -1) {
           gi1 = gi;
@@ -352,14 +349,14 @@ io_snapshot_locate(gdinfo_t *gdinfo,
         }
         ngi++;
       }
-      if (gi > gdinfo->ni-1) break;
+      if (gi > gd->ni-1) break;
     }
 
     // if in this proc
     if (ngi>0 && ngk>0)
     {
-      iosnap->i1[isnap]  = gi1 + gdinfo->fdx_nghosts;
-      iosnap->k1[isnap]  = gk1 + gdinfo->fdz_nghosts;
+      iosnap->i1[isnap]  = gi1 + gd->fdx_nghosts;
+      iosnap->k1[isnap]  = gk1 + gd->fdz_nghosts;
       iosnap->ni[isnap]  = ngi;
       iosnap->nk[isnap]  = ngk;
       iosnap->di[isnap]  = snapshot_index_incre[iptr0+0];
@@ -482,7 +479,7 @@ io_snap_nc_create(iosnap_t *iosnap, iosnap_nc_t *iosnap_nc)
 int
 io_snap_nc_put(iosnap_t *iosnap,
                iosnap_nc_t *iosnap_nc,
-               gdinfo_t    *gdinfo,
+               gd_t    *gd,
                wav_t   *wav,
                float *restrict w4d,
                float *restrict buff,
@@ -496,7 +493,7 @@ io_snap_nc_put(iosnap_t *iosnap,
   int ierr = 0;
 
   int num_of_snap = iosnap->num_of_snap;
-  size_t siz_line = gdinfo->siz_line;
+  size_t siz_line = gd->siz_line;
 
   for (int n=0; n<num_of_snap; n++)
   {
@@ -661,7 +658,7 @@ io_snap_nc_create_ac(iosnap_t *iosnap, iosnap_nc_t *iosnap_nc)
 int
 io_snap_nc_put_ac(iosnap_t *iosnap,
                iosnap_nc_t *iosnap_nc,
-               gdinfo_t    *gdinfo,
+               gd_t    *gd,
                wav_t   *wav,
                float *restrict w4d,
                float *restrict buff,
@@ -675,7 +672,7 @@ io_snap_nc_put_ac(iosnap_t *iosnap,
   int ierr = 0;
 
   int num_of_snap = iosnap->num_of_snap;
-  size_t siz_line = gdinfo->siz_line;
+  size_t siz_line = gd->siz_line;
 
   for (int n=0; n<num_of_snap; n++)
   {

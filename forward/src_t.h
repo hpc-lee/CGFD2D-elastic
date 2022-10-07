@@ -2,7 +2,6 @@
 #define SRC_FUNCS_H
 
 #include "constants.h"
-#include "gd_info.h"
 #include "gd_t.h"
 #include "interp.h"
 
@@ -56,8 +55,7 @@ typedef struct {
  *************************************************/
 
 int
-src_read_locate_file(gdinfo_t *gdinfo,
-                     gd_t     *gd,
+src_read_locate_file(gd_t     *gd,
                      src_t    *src,
                      char     *in_src_file,
                      float     t0,

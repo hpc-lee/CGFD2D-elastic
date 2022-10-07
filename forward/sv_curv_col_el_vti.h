@@ -2,7 +2,6 @@
 #define SV_CURV_COL_EL_VTI_H
 
 #include "fd_t.h"
-#include "gd_info.h"
 #include "gd_t.h"
 #include "md_t.h"
 #include "wav_t.h"
@@ -19,7 +18,7 @@ sv_curv_col_el_vti_onestage(
                float *restrict w_cur,
                float *restrict rhs, 
                wav_t  *wav,
-               gdinfo_t   *gdinfo,
+               gd_t   *gd,
                gdcurv_metric_t  *metric,
                md_t *md,
                bdry_t *bdry,
@@ -86,7 +85,7 @@ sv_curv_col_el_vti_rhs_cfspml(
                const int verbose);
 
 int
-sv_curv_col_el_vti_dvh2dvz(gdinfo_t        *gdinfo,
+sv_curv_col_el_vti_dvh2dvz(gd_t        *gd,
                            gdcurv_metric_t *metric,
                            md_t       *md,
                            bdry_t     *bdry,

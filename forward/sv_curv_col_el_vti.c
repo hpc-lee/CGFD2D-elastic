@@ -22,7 +22,7 @@ sv_curv_col_el_vti_onestage(
                float *restrict w_cur,
                float *restrict rhs, 
                wav_t  *wav,
-               gdinfo_t   *gdinfo,
+               gd_t   *gd,
                gdcurv_metric_t  *metric,
                md_t *md,
                bdry_t *bdry,
@@ -58,16 +58,16 @@ sv_curv_col_el_vti_onestage(
   float *restrict slw3d = md->rho;
 
   // grid size
-  int ni1 = gdinfo->ni1;
-  int ni2 = gdinfo->ni2;
-  int nk1 = gdinfo->nk1;
-  int nk2 = gdinfo->nk2;
+  int ni1 = gd->ni1;
+  int ni2 = gd->ni2;
+  int nk1 = gd->nk1;
+  int nk2 = gd->nk2;
 
-  int ni  = gdinfo->ni;
-  int nk  = gdinfo->nk;
-  int nx  = gdinfo->nx;
-  int nz  = gdinfo->nz;
-  size_t siz_line   = gdinfo->siz_line;
+  int ni  = gd->ni;
+  int nk  = gd->nk;
+  int nx  = gd->nx;
+  int nz  = gd->nz;
+  size_t siz_line   = gd->siz_line;
 
   float *vecVx2Vz = bdry->vecVx2Vz2;
 
@@ -698,7 +698,7 @@ sv_curv_col_el_vti_rhs_cfspml(
  ******************************************************************************/
 
 int
-sv_curv_col_el_vti_dvh2dvz(gdinfo_t        *gdinfo,
+sv_curv_col_el_vti_dvh2dvz(gd_t        *gd,
                            gdcurv_metric_t *metric,
                            md_t       *md,
                            bdry_t      *bdry,
@@ -706,13 +706,13 @@ sv_curv_col_el_vti_dvh2dvz(gdinfo_t        *gdinfo,
 {
   int ierr = 0;
 
-  int ni1 = gdinfo->ni1;
-  int ni2 = gdinfo->ni2;
-  int nk1 = gdinfo->nk1;
-  int nk2 = gdinfo->nk2;
-  int nx  = gdinfo->nx;
-  int nz  = gdinfo->nz;
-  size_t siz_line   = gdinfo->siz_line;
+  int ni1 = gd->ni1;
+  int ni2 = gd->ni2;
+  int nk1 = gd->nk1;
+  int nk2 = gd->nk2;
+  int nx  = gd->nx;
+  int nz  = gd->nz;
+  size_t siz_line   = gd->siz_line;
 
   // point to each var
   float *restrict xi_x = metric->xi_x;

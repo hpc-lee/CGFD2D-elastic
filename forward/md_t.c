@@ -14,12 +14,12 @@
 #include "md_t.h"
 
 int
-md_init(gdinfo_t *gdinfo, md_t *md, int media_type, int visco_type)
+md_init(gd_t *gd, md_t *md, int media_type, int visco_type)
 {
   int ierr = 0;
 
-  md->nx   = gdinfo->nx;
-  md->nz   = gdinfo->nz;
+  md->nx   = gd->nx;
+  md->nz   = gd->nz;
 
   md->siz_line   = md->nx;
   md->siz_slice  = md->nx * md->nz;
@@ -218,9 +218,9 @@ md_import(md_t *md, char *in_dir)
 }
 
 int
-md_export(gdinfo_t  *gdinfo,
-                 md_t *md,
-                 char *output_dir)
+md_export(gd_t  *gd,
+          md_t  *md,
+          char *output_dir)
 {
   int ierr = 0;
 
@@ -229,10 +229,10 @@ md_export(gdinfo_t  *gdinfo,
   int  number_of_vars = md->ncmp;
   int  nx = md->nx;
   int  nz = md->nz;
-  int  ni1 = gdinfo->ni1;
-  int  nk1 = gdinfo->nk1;
-  int  ni  = gdinfo->ni;
-  int  nk  = gdinfo->nk;
+  int  ni1 = gd->ni1;
+  int  nk1 = gd->nk1;
+  int  ni  = gd->ni;
+  int  nk  = gd->nk;
 
   // construct file name
   char ou_file[CONST_MAX_STRLEN];

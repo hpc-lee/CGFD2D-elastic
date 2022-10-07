@@ -20,7 +20,7 @@ sv_curv_col_ac_iso_onestage(
             float *restrict w_cur,
             float *restrict rhs, 
             wav_t  *wav,
-            gdinfo_t   *gdinfo,
+            gd_t   *gd,
             gdcurv_metric_t  *metric,
             md_t *md,
             bdry_t *bdry,
@@ -49,16 +49,16 @@ sv_curv_col_ac_iso_onestage(
   float *restrict slw3d = md->rho;
 
   // grid size
-  int ni1 = gdinfo->ni1;
-  int ni2 = gdinfo->ni2;
-  int nk1 = gdinfo->nk1;
-  int nk2 = gdinfo->nk2;
+  int ni1 = gd->ni1;
+  int ni2 = gd->ni2;
+  int nk1 = gd->nk1;
+  int nk2 = gd->nk2;
 
-  int ni  = gdinfo->ni;
-  int nk  = gdinfo->nk;
-  int nx  = gdinfo->nx;
-  int nz  = gdinfo->nz;
-  size_t siz_line   = gdinfo->siz_line;
+  int ni  = gd->ni;
+  int nk  = gd->nk;
+  int nx  = gd->nx;
+  int nz  = gd->nz;
+  size_t siz_line   = gd->siz_line;
 
   // local fd op
   int              fdx_inn_len;
