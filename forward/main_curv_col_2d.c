@@ -45,7 +45,7 @@ int main(int argc, char** argv)
     fprintf(stdout,"verbose=%d\n", verbose); fflush(stdout);
   }
 
-  fprintf(stdout,"par file =  %s\n", par_fname); 
+  fprintf(stdout,"par file =  %s\n", par_fname); fflush(stdout);
 
   // read par
 

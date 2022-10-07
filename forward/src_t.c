@@ -472,6 +472,7 @@ src_read_locate_file(gdinfo_t *gdinfo,
             float t = it_to_it1 * dt + rk_stage_time[istage] * dt - t_shift;
 
             float stf_val = src_cal_wavelet(t,wavelet_name,wavelet_coefs);
+
             if (force_actived==1) {
               src->Fx[iptr]  = stf_val * fx;
               src->Fz[iptr]  = stf_val * fz;

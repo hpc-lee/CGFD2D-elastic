@@ -722,7 +722,7 @@ par_print(par_t *par)
   fprintf(stdout, "-------------------------------------------------------\n");
   fprintf(stdout, "--> boundary layer information.\n");
   fprintf(stdout, "-------------------------------------------------------\n");
-  fprintf(stdout, " boundary_condition  = %10s%10s%10s%10s%10s%10s\n", 
+  fprintf(stdout, " boundary_condition  = %10s%10s%10s%10s\n", 
           par->boundary_type_name[0],
           par->boundary_type_name[1],
           par->boundary_type_name[2],
@@ -760,9 +760,9 @@ par_print(par_t *par)
   fprintf(stdout, " grid_generation_itype = %d\n", par->grid_generation_itype);
   if (par->grid_generation_itype==PAR_GRID_CARTESIAN) {
     fprintf(stdout, " cartesian_grid_x0 = %10.4e\n", par->cartesian_grid_origin[0]);
-    fprintf(stdout, " cartesian_grid_y0 = %10.4e\n", par->cartesian_grid_origin[1]);
+    fprintf(stdout, " cartesian_grid_z0 = %10.4e\n", par->cartesian_grid_origin[1]);
     fprintf(stdout, " cartesian_grid_dx = %10.4e\n", par->cartesian_grid_stepsize[0]);
-    fprintf(stdout, " cartesian_grid_dy = %10.4e\n", par->cartesian_grid_stepsize[1]);
+    fprintf(stdout, " cartesian_grid_dz = %10.4e\n", par->cartesian_grid_stepsize[1]);
   }
 
   fprintf(stdout, " metric_method_itype = %d\n", par->metric_method_itype);
@@ -814,10 +814,10 @@ par_print(par_t *par)
   fprintf(stdout, "number_of_receiver_line=%d\n", par->number_of_receiver_line);
   if (par->number_of_receiver_line > 0)
   {
-    fprintf(stdout, "#  name  i0  j0  k0   di  dj   dk  count\n");
+    fprintf(stdout, "#  name  i0  k0   di  dk  count\n");
     for(int n=0; n<par->number_of_receiver_line; n++)
     {
-       fprintf(stdout, "%6d %s %6d %6d %6d %6d %6d %6d %6d\n",
+       fprintf(stdout, "%6d %s %6d %6d %6d %6d %6d\n",
            n,
            par->receiver_line_name[n],
            par->receiver_line_index_start[n*2+0],
