@@ -1,25 +1,51 @@
-% Draw seismic wavefield snapshot by using pcolor style
-% Author:       Yuanhang Huo
-% Email:        yhhuo@mail.ustc.edu.cn
-% Affiliation:  University of Science and Technology of China
-% Date:         2021.05.31
-
 clear all;
 close all;
+clc;
 addmypath
 % -------------------------- parameters input -------------------------- %
 % file and path name
-parfnm='../project/test.json'
-output_dir='../project/output'
+parfnm='../project1/test.json'
+output_dir='../project1/output'
+
+% which grid profile to plot
+subs=[1,1];     % start from index '1'
+subc=[-1,-1];   % '-1' to plot all points in this dimension
+subt=[2,2];
+% read parameters file
+par=loadjson(parfnm);
+snap_subs=par.snapshot{1}.grid_index_start;
+snap_subc=par.snapshot{1}.grid_index_count;
+snap_subt=par.snapshot{1}.grid_index_incre;
+snap_subs = double(snap_subs);
+snap_subc = double(snap_subc);
+snap_subt = double(snap_subt);
+
+% get grid info
+subs1(1) = snap_subs(1) + subs(1);
+subs1(2) = snap_subs(2) + subs(2);
+subt1(1) = snap_subt(1) * subt(1); %stride
+subt1(2) = snap_subt(2) * subt(2);
+
+if(subc(1) == -1)
+  subc1(1) = floor(snap_subc(1)/subt(1))-subs(1)+1;
+else
+  subc1(1) = subc(1);
+end
+
+if(subc(2) == -1)
+  subc1(2) = floor(snap_subc(2)/subt(2))-subs(2)+1;
+else
+  subc1(2) = subc(2);
+end
 
 % which snapshot to plot
 id=1;
 
 % variable and time to plot
-varnm='Vz';
-ns=10;
+varnm='Vx';
+ns=50;
 ne=600;
-nt=10;
+nt=50;
 
 % figure control parameters
 flag_km     = 1;
@@ -27,7 +53,7 @@ flag_emlast = 1;
 flag_print  = 0;
 savegif = 0;
 
-% scl_caxis=[-1.0 1.0];
+% scl_caxis=[-10.0 10.0];
 filename1 = ['Vz2.gif'];
 scl_daspect =[1 1 1];
 clrmp       = 'jetwr';
@@ -36,7 +62,7 @@ taut=0.5;
 %-- load coord
 %-----------------------------------------------------------
 
-[x,z]=gather_coord(parfnm,output_dir);
+[x,z]=gather_coord(parfnm,output_dir,subs1,subc1,subt1);
 
 % coordinate unit
 str_unit='m';
@@ -53,7 +79,7 @@ set(hid,'BackingStore','on');
 % snapshot show
 for nlayer=ns:nt:ne
     
-    [v,t]=gather_snap(parfnm,output_dir,nlayer,varnm);
+    [v,t]=gather_snap(parfnm,output_dir,nlayer,varnm,subs,subc,subt);
     
     disp([ '  draw ' num2str(nlayer) 'th time step (t=' num2str(t) ')']);
     

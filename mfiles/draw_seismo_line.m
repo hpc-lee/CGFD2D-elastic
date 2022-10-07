@@ -1,14 +1,11 @@
-% Plot the seismograms on a line
-% Author:   Yuanhang Huo
-% Email:    yhhuo@mail.ustc.edu.cn
-% Date:     2021.06.04
-
 clear all;
+close all;
+clc;
 addmypath;
 % -------------------------- parameters input -------------------------- %
 % file and path name
-parfnm='../project/test.json';
-output_dir='../project/output';
+parfnm='../project1/test.json';
+output_dir='../project1/output';
 
 % which line to plot (start from index '1')
 lineid=1;
@@ -20,7 +17,7 @@ recid=1;
 varnm='Vz';
 
 % figure control parameters
-flag_print=1;
+flag_print=0;
 
 % ---------------------------------------------------------------------- %
 

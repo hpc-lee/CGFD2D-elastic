@@ -1,23 +1,17 @@
-% Plot the grid
-% Author:       Yuanhang Huo
-% Email:        yhhuo@mail.ustc.edu.cn
-% Affiliation:  University of Science and Technology of China
-% Date:         2021.06.06
-% Author:       Wei Zhang
-% Email:        zhangwei@sustech.edu.nc
-% Date:         2021.08.23
-
 clear all;
 close all;
 clc;
 addmypath
 
-% 2D plot slice all points
-
 % -------------------------- parameters input -------------------------- %
 % file and path name
-parfnm='../project/test.json';
-output_dir='../project/output';
+parfnm='../project1/test.json';
+output_dir='../project1/output';
+
+% which grid profile to plot
+subs=[5,5];     % start from index '1'
+subc=[-1,-1];   % '-1' to plot all points in this dimension
+subt=[2,2];
 
 % figure control parameters
 flag_km     = 1;
@@ -29,7 +23,7 @@ scl_daspect = [1 1 1];
 %-- load coord
 %-----------------------------------------------------------
 
-[x,z]=gather_coord(parfnm,output_dir);
+[x,z]=gather_coord(parfnm,output_dir,subs,subc,subt);
 
 %- set coord unit
 flag_km     = 1;

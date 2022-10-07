@@ -1,4 +1,4 @@
-function [v,t]=gather_snap(parfnm,output_dir,nlayer,varnm)
+function [v,t]=gather_snap(parfnm,output_dir,nlayer,varnm,subs,subc,subt)
 
 % load
 fnm_snap=[output_dir,'/','volume_vel.nc'];
@@ -16,16 +16,24 @@ end
 
 % read parameters file
 par=loadjson(parfnm);
-snap_subs=par.snapshot{1}.grid_index_start;
 snap_subc=par.snapshot{1}.grid_index_count;
-snap_subt=par.snapshot{1}.grid_index_incre;
-snap_tinv=par.snapshot{1}.time_index_incre;
-xs = double(snap_subs(1));
-zs = double(snap_subs(2));
-xc = double(snap_subc(1));
-zc = double(snap_subc(2));
-xt = double(snap_subt(1)); %stride
-zt = double(snap_subt(2));
+snap_subc = double(snap_subc);
+
+xs = subs(1) -1; 
+zs = subs(2) -1; 
+if(subc(1) == -1)
+  xc = floor(snap_subc(1)/subt(1))-subs(1)+1;
+else
+  xc = subc(1);
+end
+if(subc(2) == -1)
+  zc = floor(snap_subc(2)/subt(2))-subs(2)+1;
+else
+  zc = subc(2);
+end
+%stride
+xt = subt(1);
+zt = subt(2);
 
 i1 = 1;
 i2 = i1 + xc - 1;

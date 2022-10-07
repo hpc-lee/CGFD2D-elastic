@@ -1,23 +1,18 @@
-% Plot the grid
-% Author:       Yuanhang Huo
-% Email:        yhhuo@mail.ustc.edu.cn
-% Affiliation:  University of Science and Technology of China
-% Date:         2021.06.06
-% Author:       Wei Zhang
-% Email:        zhangwei@sustech.edu.nc
-% Date:         2021.08.23
-
 clear all;
 close all;
 clc;
 addmypath
 
-% 2D plot slice all points
-
 % -------------------------- parameters input -------------------------- %
 % file and path name
-parfnm='../project/test.json';
-output_dir='../project/output';
+parfnm='../project1/test.json';
+output_dir='../project1/output';
+
+% which grid profile to plot
+subs=[5,5];     % start from index '1'
+subc=[100,100];   % '-1' to plot all points in this dimension
+subt=[2,2];
+
 %media_type = 'ac_iso';
 media_type = 'el_iso';
 % figure control parameters
@@ -36,30 +31,30 @@ varnm = 'Vp';
 %-- load coord
 %-----------------------------------------------------------
 
-[x,z]=gather_coord(parfnm,output_dir);
+[x,z]=gather_coord(parfnm,output_dir,subs,subc,subt);
 
 switch varnm
     case 'Vp'
-        rho=gather_media(parfnm,output_dir,'rho');
+        rho=gather_media(parfnm,output_dir,'rho',subs,subc,subt);
         if strcmp(media_type,'ac_iso') == 1
-          kappa=gather_media(parfnm,output_dir,'kappa');
+          kappa=gather_media(parfnm,output_dir,'kappa',subs,subc,subt);
           v=( (kappa)./rho ).^0.5;
         elseif strcmp(media_type,'el_iso') == 1
-          mu=gather_media(parfnm,output_dir,'mu');
-          lambda=gather_media(parfnm,output_dir,'lambda');
+          mu=gather_media(parfnm,output_dir,'mu',subs,subc,subt);
+          lambda=gather_media(parfnm,output_dir,'lambda',subs,subc,subt);
           v=( (lambda+2*mu)./rho ).^0.5;
         end
         v=v/1e3;
     case 'Vs'
-        rho=gather_media(parfnm,output_dir,'rho');
-        mu=gather_media(parfnm,output_dir,'mu');
+        rho=gather_media(parfnm,output_dir,'rho',subs,subc,subt);
+        mu=gather_media(parfnm,output_dir,'mu',subs,subc,subt);
         v=( mu./rho ).^0.5;
         v=v/1e3;
     case 'rho'
-        v=gather_media(parfnm,output_dir,varnm);
+        v=gather_media(parfnm,output_dir,varnm,subs,subc,subt);
         v=v/1e3;
     otherwise
-        v=gather_media(parfnm,output_dir,varnm);
+        v=gather_media(parfnm,output_dir,varnm,subs,subc,subt);
 end
 
 %- set coord unit
