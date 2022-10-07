@@ -50,7 +50,7 @@ main_curv_col_2d: \
 		media_grid2model.o \
 		media_geometry2d.o \
 		media_read_file.o \
-		gd_info.o gd_t.o md_t.o wav_t.o \
+		gd_t.o md_t.o wav_t.o \
 		bdry_t.o src_t.o io_funcs.o \
 		blk_t.o interp.o\
 		drv_rk_curv_col.o \
@@ -85,8 +85,6 @@ fd_t.o: forward/fd_t.c
 par_t.o: forward/par_t.c
 	${CC} -c -o $@ $(CFLAGS) $<
 interp.o: forward/interp.c
-	${CC} -c -o $@ $(CFLAGS) $<
-gd_info.o: forward/gd_info.c
 	${CC} -c -o $@ $(CFLAGS) $<
 gd_t.o: forward/gd_t.c
 	${CC} -c -o $@ $(CFLAGS) $<
