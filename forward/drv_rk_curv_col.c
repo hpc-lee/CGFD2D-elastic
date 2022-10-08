@@ -350,7 +350,7 @@ drv_rk_curv_col_allstep(
     // apply ablexp
     //--------------------------------------------
     if (bdry->is_enable_ablexp == 1) {
-       bdry_ablexp_apply(bdry, w_end, wav->ncmp, wav->siz_slice);
+       bdry_ablexp_apply(bdry, w_end, wav->ncmp, wav->siz_icmp);
     }
 
     //--------------------------------------------
@@ -358,10 +358,10 @@ drv_rk_curv_col_allstep(
     //--------------------------------------------
 
     //-- recv by interp
-    io_recv_keep(iorecv, w_end, it, wav->ncmp, wav->siz_slice);
+    io_recv_keep(iorecv, w_end, it, wav->ncmp, wav->siz_icmp);
 
     //-- line values
-    io_line_keep(ioline, w_end, it, wav->ncmp, wav->siz_slice);
+    io_line_keep(ioline, w_end, it, wav->ncmp, wav->siz_icmp);
 
     // snapshot
     if (md->medium_type == CONST_MEDIUM_ACOUSTIC_ISO) {

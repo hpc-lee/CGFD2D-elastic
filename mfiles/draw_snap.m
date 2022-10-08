@@ -7,10 +7,32 @@ addmypath
 parfnm='../project1/test.json'
 output_dir='../project1/output'
 
+% which snapshot to plot
+id=1;
+
+% variable and time to plot
+varnm='Vx';
+ns=600;
+ne=600;
+nt=50;
+
 % which grid profile to plot
 subs=[1,1];     % start from index '1'
 subc=[-1,-1];   % '-1' to plot all points in this dimension
-subt=[2,2];
+subt=[1,1];
+
+% figure control parameters
+flag_km     = 1;
+flag_emlast = 1;
+flag_print  = 0;
+savegif = 0;
+
+% scl_caxis=[-10.0 10.0];
+filename1 = ['Vz2.gif'];
+scl_daspect =[1 1 1];
+clrmp       = 'jetwr';
+taut=0.5;
+
 % read parameters file
 par=loadjson(parfnm);
 snap_subs=par.snapshot{1}.grid_index_start;
@@ -37,27 +59,6 @@ if(subc(2) == -1)
 else
   subc1(2) = subc(2);
 end
-
-% which snapshot to plot
-id=1;
-
-% variable and time to plot
-varnm='Vx';
-ns=50;
-ne=600;
-nt=50;
-
-% figure control parameters
-flag_km     = 1;
-flag_emlast = 1;
-flag_print  = 0;
-savegif = 0;
-
-% scl_caxis=[-10.0 10.0];
-filename1 = ['Vz2.gif'];
-scl_daspect =[1 1 1];
-clrmp       = 'jetwr';
-taut=0.5;
 %-----------------------------------------------------------
 %-- load coord
 %-----------------------------------------------------------
