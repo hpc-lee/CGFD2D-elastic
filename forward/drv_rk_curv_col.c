@@ -107,7 +107,7 @@ drv_rk_curv_col_allstep(
     {
       sv_curv_col_el_aniso_dvh2dvz(gd,metric,md,bdry,verbose);
     }
-    if(md->medium_type == CONST_MEDIUM_ELASTIC_VTI)
+    else if(md->medium_type == CONST_MEDIUM_ELASTIC_VTI)
     {
       sv_curv_col_el_vti_dvh2dvz(gd,metric,md,bdry,verbose);
     } 
