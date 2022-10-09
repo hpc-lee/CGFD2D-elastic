@@ -5,9 +5,6 @@ set -e
 
 date
 
-#-- system related dir
-MPIDIR=/data3/lihl/software/openmpi-gnu-4.1.2
-
 #-- program related dir
 EXEC_WAVE=`pwd`/../main_curv_col_2d
 echo "EXEC_WAVE=$EXEC_WAVE"
@@ -16,7 +13,7 @@ echo "EXEC_WAVE=$EXEC_WAVE"
 INPUTDIR=`pwd`
 
 #-- output and conf
-PROJDIR=`pwd`/../project1
+PROJDIR=`pwd`/../project
 PAR_FILE=${PROJDIR}/test.json
 GRID_DIR=${PROJDIR}/output
 MEDIA_DIR=${PROJDIR}/output
@@ -34,7 +31,7 @@ mkdir -p $MEDIA_DIR
 #----------------------------------------------------------------------
 cat << ieof > $PAR_FILE
 {
-  "number_of_total_grid_points_x" : 300,
+  "number_of_total_grid_points_x" : 400,
   "number_of_total_grid_points_z" : 300,
 
   "size_of_time_step" : 0.01,
@@ -72,11 +69,11 @@ cat << ieof > $PAR_FILE
 
   "grid_generation_method" : {
       "#import" : "$GRID_DIR",
-      "#cartesian" : {
-        "origin"  : [0.0, -29900.0 ],
-        "inteval" : [ 100.0, 100.0 ]
+      "cartesian" : {
+         "origin"  : [0.0, -29900.0 ],
+         "inteval" : [ 100.0, 100.0 ]
       },
-      "layer_interp" : {
+      "#layer_interp" : {
         "in_grid_layer_file" : "$INPUTDIR/prep_grid/random_topo_single.gdlay",
         "refine_factor" : [ 1, 1 ],
         "horizontal_start_index" : [ 3],
@@ -93,7 +90,7 @@ cat << ieof > $PAR_FILE
   "is_export_metric" : 1,
 
   "medium" : {
-      "type" : "elastic_iso",
+      "type" : "elastic_vti",
       "#input_way" : "infile_layer",
       "#input_way" : "binfile",
       "input_way" : "code",
@@ -151,13 +148,13 @@ cat << ieof > $PAR_FILE
     {
       "name" : "volume_vel",
       "grid_index_start" : [ 0,   0 ],
-      "grid_index_count" : [ 300, 300 ],
+      "grid_index_count" : [ 400, 300 ],
       "grid_index_incre" : [  1,  1 ],
       "time_index_start" : 0,
       "time_index_incre" : 1,
       "save_velocity" : 1,
-      "save_stress"   : 0,
-      "save_strain"   : 0
+      "save_stress"   : 1,
+      "save_strain"   : 1
     }
   ],
 

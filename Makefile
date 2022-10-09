@@ -25,7 +25,7 @@ CFLAGS := -I$(NETCDF)/include -I./lib/ -I./forward/ -I./media/  $(CFLAGS)
 #CPPFLAGS := -g -std=c++11 $(CPPFLAGS)
 #- O3
 CFLAGS   := -O3 -std=c99 $(CFLAGS)
-CPPFLAGS := -std=c++11 $(CPPFLAGS)
+CPPFLAGS := -O3 -std=c++11 $(CPPFLAGS)
 
 #- static
 #LDFLAGS := $(NETCDF)/lib/libnetcdf.a -lm -static $(LDFLAGS)
