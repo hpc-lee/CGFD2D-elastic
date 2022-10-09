@@ -3,7 +3,7 @@
 
 #include "constants.h"
 #include "gd_t.h"
-#include "io_funcs.h"
+#include "md_t.h"
 #include "wav_t.h"
 
 /*************************************************
@@ -138,6 +138,7 @@ int
 io_snap_nc_put(iosnap_t *iosnap,
                iosnap_nc_t *iosnap_nc,
                gd_t    *gd,
+               md_t    *md,
                wav_t   *wav,
                float *restrict w4d,
                float *restrict buff,
@@ -155,6 +156,7 @@ int
 io_snap_nc_put_ac(iosnap_t *iosnap,
                iosnap_nc_t *iosnap_nc,
                gd_t    *gd,
+               md_t    *md,
                wav_t   *wav,
                float *restrict w4d,
                float *restrict buff,
@@ -175,6 +177,23 @@ io_snap_pack_buff(float *restrict var,
                   int countk,
                   int increk,
                   float *restrict buff);
+
+int
+io_snap_stress_to_strain_eliso(float *lam3d,
+                               float *mu3d,
+                               float *Txx,
+                               float *Tzz,
+                               float *Txz,
+                               float *Exx,
+                               float *Ezz,
+                               float *Exz,
+                               size_t siz_iz,
+                               int starti,
+                               int counti,
+                               int increi,
+                               int startk,
+                               int countk,
+                               int increk);
 
 int
 io_snap_nc_close(iosnap_nc_t *iosnap_nc);

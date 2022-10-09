@@ -480,6 +480,7 @@ int
 io_snap_nc_put(iosnap_t *iosnap,
                iosnap_nc_t *iosnap_nc,
                gd_t    *gd,
+               md_t    *md,
                wav_t   *wav,
                float *restrict w4d,
                float *restrict buff,
@@ -561,9 +562,26 @@ io_snap_nc_put(iosnap_t *iosnap,
         nc_put_vara_float(iosnap_nc->ncid[n],iosnap_nc->varid_T[n*3+2],
               startp,countp,buff);
       }
-      if (is_run_out_stress==1 && snap_out_E==1)
+      if (is_run_out_stress==1 && snap_out_E==1 && 
+          md->medium_type == CONST_MEDIUM_ELASTIC_ISO)
       {
-        // need to implement
+        // convert to strain
+        io_snap_stress_to_strain_eliso(md->lambda,md->mu,
+                                       w4d + wav->Txx_pos,    //Txx
+                                       w4d + wav->Tzz_pos,    //Tzz
+                                       w4d + wav->Txz_pos,    //Txz
+                                       buff + wav->Txx_pos,   //Exx
+                                       buff + wav->Tzz_pos,   //Ezz
+                                       buff + wav->Txz_pos,   //Exz
+                                       siz_iz,snap_i1,snap_ni,snap_di,
+                                       snap_k1,snap_nk,snap_dk);
+        // export
+        nc_put_vara_float(iosnap_nc->ncid[n],iosnap_nc->varid_E[n*3+0],
+              startp,countp,buff + wav->Txx_pos);
+        nc_put_vara_float(iosnap_nc->ncid[n],iosnap_nc->varid_E[n*3+1],
+              startp,countp,buff + wav->Tzz_pos);
+        nc_put_vara_float(iosnap_nc->ncid[n],iosnap_nc->varid_E[n*3+2],
+              startp,countp,buff + wav->Txz_pos);
       }
 
       if (is_incr_cur_it == 1) {
@@ -659,6 +677,7 @@ int
 io_snap_nc_put_ac(iosnap_t *iosnap,
                iosnap_nc_t *iosnap_nc,
                gd_t    *gd,
+               md_t    *md,
                wav_t   *wav,
                float *restrict w4d,
                float *restrict buff,
@@ -744,6 +763,55 @@ io_snap_nc_put_ac(iosnap_t *iosnap,
 }
 
 int
+io_snap_stress_to_strain_eliso(float *lam3d,
+                               float *mu3d,
+                               float *Txx,
+                               float *Tzz,
+                               float *Txz,
+                               float *Exx,
+                               float *Ezz,
+                               float *Exz,
+                               size_t siz_iz,
+                               int starti,
+                               int counti,
+                               int increi,
+                               int startk,
+                               int countk,
+                               int increk)
+{
+  size_t iptr_snap=0;
+  size_t i,k,iptr,iptr_k;
+  float lam,mu,E1,E2,E3,E0;
+
+  for (int n3=0; n3<countk; n3++)
+  {
+    k = startk + n3 * increk;
+    iptr_k = k * siz_iz;
+    for (int n1=0; n1<counti; n1++)
+    {
+      i = starti + n1 * increi;
+      iptr = i + iptr_k;
+      iptr_snap = n1 + n3 * counti;
+
+      lam = lam3d[iptr];
+      mu  =  mu3d[iptr];
+      
+      E1 = (lam + mu) / (mu * ( 3.0 * lam + 2.0 * mu));
+      E2 = - lam / ( 2.0 * mu * (3.0 * lam + 2.0 * mu));
+      E3 = 1.0 / mu;
+
+      E0 = E2 * (Txx[iptr] + Tzz[iptr]);
+
+      Exx[iptr_snap] = E0 - (E2 - E1) * Txx[iptr];
+      Ezz[iptr_snap] = E0 - (E2 - E1) * Tzz[iptr];
+      Exz[iptr_snap] = 0.5 * E3 * Txz[iptr];
+    } //i
+  } //k
+
+  return 0;
+}
+
+int
 io_snap_pack_buff(float *restrict var,
                   size_t siz_iz,
                   int starti,
@@ -784,7 +852,7 @@ int
 io_recv_keep(iorecv_t *iorecv, float *restrict w4d,
              int it, int ncmp, int siz_icmp)
 {
-  float Lx1, Lx2, Ly1, Ly2, Lz1, Lz2;
+  float Lx1, Lx2, Lz1, Lz2;
 
   for (int n=0; n < iorecv->total_number; n++)
   {

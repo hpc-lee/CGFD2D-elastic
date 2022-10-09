@@ -35,7 +35,7 @@ md_init(gd_t *gd, md_t *md, int media_type, int visco_type)
   {
       md->ncmp = 3; // rho + lambda + mu
   } else if (media_type == CONST_MEDIUM_ELASTIC_VTI) {
-      md->ncmp = 4; // c11 13 33 55 + rho
+      md->ncmp = 5; // c11 13 33 55 + rho
   } else if (media_type == CONST_MEDIUM_ELASTIC_ANISO){
       md->ncmp = 7; // 11, 13, 15, 33, 35, 55, rho
   } else{

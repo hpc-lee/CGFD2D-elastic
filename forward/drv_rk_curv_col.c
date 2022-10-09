@@ -365,10 +365,10 @@ drv_rk_curv_col_allstep(
 
     // snapshot
     if (md->medium_type == CONST_MEDIUM_ACOUSTIC_ISO) {
-      io_snap_nc_put_ac(iosnap, &iosnap_nc, gd, wav, 
+      io_snap_nc_put_ac(iosnap, &iosnap_nc, gd, md, wav, 
                      w_end, w_rhs, nt_total, it, t_end, 1,1,1);
     } else {
-      io_snap_nc_put(iosnap, &iosnap_nc, gd, wav, 
+      io_snap_nc_put(iosnap, &iosnap_nc, gd, md, wav, 
                      w_end, w_rhs, nt_total, it, t_end, 1,1,1);
     }
 
