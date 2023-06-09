@@ -39,4 +39,13 @@
 #define RK5b13 0.063692468666290 
 #define RK5b14 0.386708617503269
 #define RK5b15 0.226007483236906 
+
+#define handle_nc_err(err)                       \
+{                                                \
+  if (err != NC_NOERR) {                         \
+     fprintf(stderr,"nc error: %s\n", nc_strerror(err)); \
+     exit(-1);                                   \
+  }                                              \
+}
+
 #endif
