@@ -470,16 +470,15 @@ sv_curv_col_el_vti_rhs_cfspml(
   float Dx_DzVx,Dx_DzVz;
 
   // local
-  int i,k;
   int iptr, iptr_k, iptr_a;
   float coef_A, coef_B, coef_D, coef_B_minus_1;
 
   // put fd op into local array
-  for (i=0; i < fdx_len; i++) {
+  for (int i=0; i < fdx_len; i++) {
     lfdx_coef [i] = fdx_coef[i];
     lfdx_shift[i] = fdx_indx[i];
   }
-  for (k=0; k < fdz_len; k++) {
+  for (int k=0; k < fdz_len; k++) {
     lfdz_coef [k] = fdz_coef[k];
     lfdz_shift[k] = fdz_indx[k] * siz_iz;
   }
@@ -525,105 +524,105 @@ sv_curv_col_el_vti_rhs_cfspml(
       if (idim == 0 ) // x direction
       {
         iptr_a = 0;
-        for (k=abs_nk1; k<=abs_nk2; k++)
+        for (int k=abs_nk1; k<=abs_nk2; k++)
         {
           iptr_k = k * siz_iz;
-            iptr = iptr_k + abs_ni1;
-            for (i=abs_ni1; i<=abs_ni2; i++)
+          iptr = iptr_k + abs_ni1;
+          for (int i=abs_ni1; i<=abs_ni2; i++)
+          {
+            // pml coefs
+            int abs_i = i - abs_ni1;
+            coef_D = ptr_coef_D[abs_i];
+            coef_A = ptr_coef_A[abs_i];
+            coef_B = ptr_coef_B[abs_i];
+            coef_B_minus_1 = coef_B - 1.0;
+
+            // metric
+            xix = xi_x[iptr];
+            xiz = xi_z[iptr];
+
+            // medium
+            slw = slw3d[iptr];
+            c11 = c11d[iptr];
+            c13 = c13d[iptr];
+            c33 = c33d[iptr];
+            c55 = c55d[iptr];
+
+            // xi derivatives
+            M_FD_SHIFT(DxVx , Vx , iptr, fdx_len, lfdx_shift, lfdx_coef, n_fd);
+            M_FD_SHIFT(DxVz , Vz , iptr, fdx_len, lfdx_shift, lfdx_coef, n_fd);
+            M_FD_SHIFT(DxTxx, Txx, iptr, fdx_len, lfdx_shift, lfdx_coef, n_fd);
+            M_FD_SHIFT(DxTzz, Tzz, iptr, fdx_len, lfdx_shift, lfdx_coef, n_fd);
+            M_FD_SHIFT(DxTxz, Txz, iptr, fdx_len, lfdx_shift, lfdx_coef, n_fd);
+
+            // combine for corr and aux vars
+             hVx_rhs = slw * ( xix*DxTxx + xiz*DxTxz );
+             hVz_rhs = slw * ( xix*DxTxz + xiz*DxTzz );
+            hTxx_rhs = (c11*xix)*DxVx + (c13*xiz)*DxVz; 
+            hTzz_rhs = (c13*xix)*DxVx + (c33*xiz)*DxVz;
+            hTxz_rhs = (c55*xiz)*DxVx + (c55*xix)*DxVz;
+
+            // 1: make corr to moment equation
+            hVx[iptr] += coef_B_minus_1 * hVx_rhs - coef_B * pml_Vx[iptr_a];
+            hVz[iptr] += coef_B_minus_1 * hVz_rhs - coef_B * pml_Vz[iptr_a];
+
+            // make corr to Hooke's equatoin
+            hTxx[iptr] += coef_B_minus_1 * hTxx_rhs - coef_B * pml_Txx[iptr_a];
+            hTzz[iptr] += coef_B_minus_1 * hTzz_rhs - coef_B * pml_Tzz[iptr_a];
+            hTxz[iptr] += coef_B_minus_1 * hTxz_rhs - coef_B * pml_Txz[iptr_a];
+            
+            // 2: aux var
+            //   a1 = alpha + d / beta, dealt in abs_set_cfspml
+            pml_hVx[iptr_a]  = coef_D * hVx_rhs  - coef_A * pml_Vx[iptr_a];
+            pml_hVz[iptr_a]  = coef_D * hVz_rhs  - coef_A * pml_Vz[iptr_a];
+            pml_hTxx[iptr_a] = coef_D * hTxx_rhs - coef_A * pml_Txx[iptr_a];
+            pml_hTzz[iptr_a] = coef_D * hTzz_rhs - coef_A * pml_Tzz[iptr_a];
+            pml_hTxz[iptr_a] = coef_D * hTxz_rhs - coef_A * pml_Txz[iptr_a];
+
+            // add contributions from free surface condition
+            //  not consider timg because conflict with main cfspml,
+            //     need to revise in the future if required
+            if (bdry->is_sides_free[CONST_NDIM-1][1]==1 && k==nk2)
             {
-              // pml coefs
-              int abs_i = i - abs_ni1;
-              coef_D = ptr_coef_D[abs_i];
-              coef_A = ptr_coef_A[abs_i];
-              coef_B = ptr_coef_B[abs_i];
-              coef_B_minus_1 = coef_B - 1.0;
+              // zeta derivatives
+              int ij = i*4;
+              Dx_DzVx = vecVx2Vz[ij+2*0+0] * DxVx
+                      + vecVx2Vz[ij+2*0+1] * DxVz;
+
+              Dx_DzVz = vecVx2Vz[ij+2*1+0] * DxVx
+                      + vecVx2Vz[ij+2*1+1] * DxVz;
 
               // metric
-              xix = xi_x[iptr];
-              xiz = xi_z[iptr];
+              ztx = zt_x[iptr];
+              ztz = zt_z[iptr];
 
-              // medium
-              slw = slw3d[iptr];
-              c11 = c11d[iptr];
-              c13 = c13d[iptr];
-              c33 = c33d[iptr];
-              c55 = c55d[iptr];
-
-              // xi derivatives
-              M_FD_SHIFT(DxVx , Vx , iptr, fdx_len, lfdx_shift, lfdx_coef, n_fd);
-              M_FD_SHIFT(DxVz , Vz , iptr, fdx_len, lfdx_shift, lfdx_coef, n_fd);
-              M_FD_SHIFT(DxTxx, Txx, iptr, fdx_len, lfdx_shift, lfdx_coef, n_fd);
-              M_FD_SHIFT(DxTzz, Tzz, iptr, fdx_len, lfdx_shift, lfdx_coef, n_fd);
-              M_FD_SHIFT(DxTxz, Txz, iptr, fdx_len, lfdx_shift, lfdx_coef, n_fd);
-
-              // combine for corr and aux vars
-               hVx_rhs = slw * ( xix*DxTxx + xiz*DxTxz );
-               hVz_rhs = slw * ( xix*DxTxz + xiz*DxTzz );
-              hTxx_rhs = (c11*xix)*DxVx + (c13*xiz)*DxVz; 
-              hTzz_rhs = (c13*xix)*DxVx + (c33*xiz)*DxVz;
-              hTxz_rhs = (c55*xiz)*DxVx + (c55*xix)*DxVz;
-
-              // 1: make corr to moment equation
-              hVx[iptr] += coef_B_minus_1 * hVx_rhs - coef_B * pml_Vx[iptr_a];
-              hVz[iptr] += coef_B_minus_1 * hVz_rhs - coef_B * pml_Vz[iptr_a];
+              // keep xi derivative terms, including free surface convered
+              hTxx_rhs = (c11*ztx)*Dx_DzVx + (c13*ztz)*Dx_DzVz; 
+              hTzz_rhs = (c13*ztx)*Dx_DzVx + (c33*ztz)*Dx_DzVz;
+              hTxz_rhs = (c55*ztz)*Dx_DzVx + (c55*ztx)*Dx_DzVz;
 
               // make corr to Hooke's equatoin
-              hTxx[iptr] += coef_B_minus_1 * hTxx_rhs - coef_B * pml_Txx[iptr_a];
-              hTzz[iptr] += coef_B_minus_1 * hTzz_rhs - coef_B * pml_Tzz[iptr_a];
-              hTxz[iptr] += coef_B_minus_1 * hTxz_rhs - coef_B * pml_Txz[iptr_a];
-              
-              // 2: aux var
+              hTxx[iptr] += (coef_B - 1.0) * hTxx_rhs;
+              hTzz[iptr] += (coef_B - 1.0) * hTzz_rhs;
+              hTxz[iptr] += (coef_B - 1.0) * hTxz_rhs;
+
+              // aux var
               //   a1 = alpha + d / beta, dealt in abs_set_cfspml
-              pml_hVx[iptr_a]  = coef_D * hVx_rhs  - coef_A * pml_Vx[iptr_a];
-              pml_hVz[iptr_a]  = coef_D * hVz_rhs  - coef_A * pml_Vz[iptr_a];
-              pml_hTxx[iptr_a] = coef_D * hTxx_rhs - coef_A * pml_Txx[iptr_a];
-              pml_hTzz[iptr_a] = coef_D * hTzz_rhs - coef_A * pml_Tzz[iptr_a];
-              pml_hTxz[iptr_a] = coef_D * hTxz_rhs - coef_A * pml_Txz[iptr_a];
+              pml_hTxx[iptr_a] += coef_D * hTxx_rhs;
+              pml_hTzz[iptr_a] += coef_D * hTzz_rhs;
+              pml_hTxz[iptr_a] += coef_D * hTxz_rhs;
+            } // if nk2
 
-              // add contributions from free surface condition
-              //  not consider timg because conflict with main cfspml,
-              //     need to revise in the future if required
-              if (bdry->is_sides_pml[CONST_NDIM-1][1]==1 && k==nk2)
-              {
-                // zeta derivatives
-                int ij = (i )*4;
-                Dx_DzVx = vecVx2Vz[ij+2*0+0] * DxVx
-                        + vecVx2Vz[ij+2*0+1] * DxVz;
-
-                Dx_DzVz = vecVx2Vz[ij+2*1+0] * DxVx
-                        + vecVx2Vz[ij+2*1+1] * DxVz;
-
-                // metric
-                ztx = zt_x[iptr];
-                ztz = zt_z[iptr];
-
-                // keep xi derivative terms, including free surface convered
-                hTxx_rhs = (c11*ztx)*Dx_DzVx + (c13*ztz)*Dx_DzVz; 
-                hTzz_rhs = (c13*ztx)*Dx_DzVx + (c33*ztz)*Dx_DzVz;
-                hTxz_rhs = (c55*ztz)*Dx_DzVx + (c55*ztx)*Dx_DzVz;
-
-                // make corr to Hooke's equatoin
-                hTxx[iptr] += (coef_B - 1.0) * hTxx_rhs;
-                hTzz[iptr] += (coef_B - 1.0) * hTzz_rhs;
-                hTxz[iptr] += (coef_B - 1.0) * hTxz_rhs;
-
-                // aux var
-                //   a1 = alpha + d / beta, dealt in abs_set_cfspml
-                pml_hTxx[iptr_a] += coef_D * hTxx_rhs;
-                pml_hTzz[iptr_a] += coef_D * hTzz_rhs;
-                pml_hTxz[iptr_a] += coef_D * hTxz_rhs;
-              } // if nk2
-
-              // incr index
-              iptr   += 1;
-              iptr_a += 1;
-            } // i
+            // incr index
+            iptr   += 1;
+            iptr_a += 1;
+          } // i
         } // k
       }
       else // z direction
       {
         iptr_a = 0;
-        for (k=abs_nk1; k<=abs_nk2; k++)
+        for (int k=abs_nk1; k<=abs_nk2; k++)
         {
           iptr_k = k * siz_iz;
 
@@ -635,7 +634,7 @@ sv_curv_col_el_vti_rhs_cfspml(
           coef_B_minus_1 = coef_B - 1.0;
 
             iptr = iptr_k + abs_ni1;
-            for (i=abs_ni1; i<=abs_ni2; i++)
+            for (int i=abs_ni1; i<=abs_ni2; i++)
             {
               // metric
               ztx = zt_x[iptr];
@@ -734,48 +733,47 @@ sv_curv_col_el_vti_dvh2dvz(gd_t        *gd,
   float         c33        ;
   float                 c55;
   float xix,xiz,ztx,ztz;
- 
-  int k = nk2;
 
-    for (size_t i = ni1; i <= ni2; i++)
-    {
-      size_t iptr = i + k * siz_iz;
+  for (size_t i = ni1; i <= ni2; i++)
+  {
+    size_t iptr = i + nk2 * siz_iz;
 
-      xix = xi_x[iptr];
-      xiz = xi_z[iptr];
-      ztx = zt_x[iptr];
-      ztz = zt_z[iptr];
-      
-      c11 = c11d[iptr];
-      c13 = c13d[iptr];
-      c33 = c33d[iptr];
-      c55 = c55d[iptr];
+    xix = xi_x[iptr];
+    xiz = xi_z[iptr];
+    ztx = zt_x[iptr];
+    ztz = zt_z[iptr];
+    
+    c11 = c11d[iptr];
+    c13 = c13d[iptr];
+    c33 = c33d[iptr];
+    c55 = c55d[iptr];
 
-      // first dim: irow; sec dim: jcol, as Fortran code
-      A[0][0] = (c11*ztx)*ztx + (c55*ztz)*ztz;
-      A[1][0] = (c55*ztz)*ztx + (c13*ztx)*ztz;
+    // first dim: irow; sec dim: jcol, as Fortran code
+    A[0][0] = (c11*ztx)*ztx + (c55*ztz)*ztz;
+    A[1][0] = (c55*ztz)*ztx + (c13*ztx)*ztz;
 
-      A[0][1] = (c13*ztz)*ztx + (c55*ztx)*ztz; 
-      A[1][1] = (c55*ztx)*ztx + (c33*ztz)*ztz; 
+    A[0][1] = (c13*ztz)*ztx + (c55*ztx)*ztz; 
+    A[1][1] = (c55*ztx)*ztx + (c33*ztz)*ztz; 
 
-      fdlib_math_invert2x2(A);
-                                                       
-      B[0][0] = (c11*xix)*ztx + (c55*xiz)*ztz;
-      B[1][0] = (c55*xiz)*ztx + (c13*xix)*ztz;
+    fdlib_math_invert2x2(A);
+                                                     
+    B[0][0] = (c11*xix)*ztx + (c55*xiz)*ztz;
+    B[1][0] = (c55*xiz)*ztx + (c13*xix)*ztz;
 
-      B[0][1] = (c13*xiz)*ztx + (c55*xix)*ztz; 
-      B[1][1] = (c55*xix)*ztx + (c33*xiz)*ztz; 
-       
-      fdlib_math_matmul2x2(A, B, AB);
+    B[0][1] = (c13*xiz)*ztx + (c55*xix)*ztz; 
+    B[1][1] = (c55*xix)*ztx + (c33*xiz)*ztz; 
+     
+    fdlib_math_matmul2x2(A, B, AB);
 
-      size_t ij = (i) * 4;
+    size_t ij = i * 4;
 
-      // save into mat
-      for(int irow = 0; irow < 2; irow++)
-        for(int jcol = 0; jcol < 2; jcol++){
-          vecVx2Vz[ij + irow*2 + jcol] = -AB[irow][jcol];
-        }
+    // save into mat
+    for(int irow = 0; irow < 2; irow++){
+      for(int jcol = 0; jcol < 2; jcol++){
+        vecVx2Vz[ij + irow*2 + jcol] = -AB[irow][jcol];
+      }
     }
+  }
 
   return ierr;
 }

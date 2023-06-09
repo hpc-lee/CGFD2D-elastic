@@ -427,16 +427,30 @@ par_read_from_str(const char *str, par_t *par)
   par->visco_itype = 0;
   if (item = cJSON_GetObjectItem(root, "visco_config")) {
     if (subitem = cJSON_GetObjectItem(item, "type")) {
-        sprintf(par->visco_type, "%s", subitem->valuestring);
-        if (strcmp(par->visco_type, "graves_Qs")==0) {
-          par->visco_itype = CONST_VISCO_GRAVES_QS;
-        } else {
-          fprintf(stderr,"ERROR: visco_type is unknown\n");
-          exit(1);
-        }
+      sprintf(par->visco_type, "%s", subitem->valuestring);
+      if (strcmp(par->visco_type, "graves_Qs")==0) {
+        par->visco_itype = CONST_VISCO_GRAVES_QS;
+      }else if (strcmp(par->visco_type, "gmb")==0) {
+        par->visco_itype = CONST_VISCO_GMB;
+      } else {
+        fprintf(stderr,"ERROR: visco_type is unknown\n");
+        exit(1);
+      }
     }
     if (subitem = cJSON_GetObjectItem(item, "Qs_freq")) {
         par->visco_Qs_freq = subitem->valuedouble;
+    }
+    if (subitem = cJSON_GetObjectItem(item, "number_of_maxwell")) {
+        par->nmaxwell = subitem->valueint;
+    }
+    if (subitem = cJSON_GetObjectItem(item, "max_freq")) {
+        par->fmax = subitem->valuedouble;
+    }
+    if (subitem = cJSON_GetObjectItem(item, "min_freq")) {
+        par->fmin = subitem->valuedouble;
+    }
+    if (subitem = cJSON_GetObjectItem(item, "refer_freq")) {
+        par->fr = subitem->valuedouble;
     }
   }
 

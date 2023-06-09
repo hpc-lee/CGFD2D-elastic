@@ -92,6 +92,7 @@ typedef struct
   float *ablexp_Ex;
   float *ablexp_Ez;
 
+  float *vecA;  //DZ inversion
   // top
   float *vecVx2Vz2; // [j,i, dzVi, dxVi]
 
@@ -123,6 +124,7 @@ int
 bdry_free_set(gd_t    *gd,
               bdry_t  *bdryfree,
               int   in_is_sides[][2],
+              int visco_type,
               const int verbose);
 
 int

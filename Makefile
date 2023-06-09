@@ -16,6 +16,9 @@
 CC     := /data3/lihl/software/gcc-10.3.0-compile/bin/gcc
 CXX    := /data3/lihl/software/gcc-10.3.0-compile/bin/g++
 NETCDF := /data3/lihl/software/disable-netcdf-4.4.1
+#CC     := /opt/apps/openmpi/4.1.2-cuda-aware/bin/mpicc
+#CXX    := /opt/apps/openmpi/4.1.2-cuda-aware/bin/mpicxx
+#NETCDF := /opt/apps/gcc-4.8.5/disable-netcdf-4.4.1
 
 #-- 
 CFLAGS := -I$(NETCDF)/include -I./lib/ -I./forward/ -I./media/  $(CFLAGS)
@@ -59,6 +62,7 @@ main_curv_col_2d: \
 		sv_curv_col_el_iso.o \
 		sv_curv_col_el_vti.o \
 		sv_curv_col_el_aniso.o \
+		sv_curv_col_el_vis.o \
 		main_curv_col_2d.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
@@ -111,6 +115,8 @@ sv_curv_col_el_vti.o:   forward/sv_curv_col_el_vti.c
 sv_curv_col_el_aniso.o: forward/sv_curv_col_el_aniso.c
 	${CC} -c -o $@ $(CFLAGS) $<
 sv_curv_col_ac_iso.o:   forward/sv_curv_col_ac_iso.c
+	${CC} -c -o $@ $(CFLAGS) $<
+sv_curv_col_el_vis.o:   forward/sv_curv_col_el_vis.c
 	${CC} -c -o $@ $(CFLAGS) $<
 
 main_curv_col_2d.o: forward/main_curv_col_2d.c

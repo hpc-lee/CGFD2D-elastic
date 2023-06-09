@@ -16,7 +16,8 @@ typedef struct {
   float *v4d; // allocated var
 
   int n1, n2, n3, n4, n5;
-  int nx, nz, ncmp, nlevel;
+  int nx, nz, ncmp, nlevel, nmaxwell;
+  int visco_type;
 
   size_t siz_iz;
   size_t siz_icmp;
@@ -39,6 +40,15 @@ typedef struct {
   size_t Tzz_seq;
   size_t Txz_seq;
 
+  // vis 
+  size_t *Jxx_pos;
+  size_t *Jzz_pos;
+  size_t *Jxz_pos;
+
+  size_t *Jxx_seq;
+  size_t *Jzz_seq;
+  size_t *Jxz_seq;
+
 } wav_t;
 
 /*************************************************
@@ -48,7 +58,10 @@ typedef struct {
 int 
 wav_init(gd_t *gd,
          wav_t *V,
-         int number_of_levels);
+         int number_of_levels,
+         int visco_type,
+         int nmaxwell);
+
 
 int
 wav_check_value(float *restrict w, wav_t *wav);

@@ -479,16 +479,15 @@ sv_curv_col_el_aniso_rhs_cfspml(
   float Dx_DzVx,Dx_DzVz;
 
   // local
-  int i,k;
   int iptr, iptr_k, iptr_a;
   float coef_A, coef_B, coef_D, coef_B_minus_1;
 
   // put fd op into local array
-  for (i=0; i < fdx_len; i++) {
+  for (int i=0; i < fdx_len; i++) {
     lfdx_coef [i] = fdx_coef[i];
     lfdx_shift[i] = fdx_indx[i];
   }
-  for (k=0; k < fdz_len; k++) {
+  for (int k=0; k < fdz_len; k++) {
     lfdz_coef [k] = fdz_coef[k];
     lfdz_shift[k] = fdz_indx[k] * siz_iz;
   }
@@ -534,11 +533,11 @@ sv_curv_col_el_aniso_rhs_cfspml(
       if (idim == 0 ) // x direction
       {
         iptr_a = 0;
-        for (k=abs_nk1; k<=abs_nk2; k++)
+        for (int k=abs_nk1; k<=abs_nk2; k++)
         {
           iptr_k = k * siz_iz;
             iptr = iptr_k + abs_ni1;
-            for (i=abs_ni1; i<=abs_ni2; i++)
+            for (int i=abs_ni1; i<=abs_ni2; i++)
             {
               // pml coefs
               int abs_i = i - abs_ni1;
@@ -594,7 +593,7 @@ sv_curv_col_el_aniso_rhs_cfspml(
               // add contributions from free surface condition
               //  not consider timg because conflict with main cfspml,
               //     need to revise in the future if required
-              if (bdry->is_sides_pml[CONST_NDIM-1][1]==1 && k==nk2)
+              if (bdry->is_sides_free[CONST_NDIM-1][1]==1 && k==nk2)
               {
                 // zeta derivatives
                 int ij = (i )*4;
@@ -634,7 +633,7 @@ sv_curv_col_el_aniso_rhs_cfspml(
       else // z direction
       {
         iptr_a = 0;
-        for (k=abs_nk1; k<=abs_nk2; k++)
+        for (int k=abs_nk1; k<=abs_nk2; k++)
         {
           iptr_k = k * siz_iz;
 
@@ -646,7 +645,7 @@ sv_curv_col_el_aniso_rhs_cfspml(
           coef_B_minus_1 = coef_B - 1.0;
 
             iptr = iptr_k + abs_ni1;
-            for (i=abs_ni1; i<=abs_ni2; i++)
+            for (int i=abs_ni1; i<=abs_ni2; i++)
             {
               // metric
               ztx = zt_x[iptr];
@@ -749,50 +748,49 @@ sv_curv_col_el_aniso_dvh2dvz(gd_t        *gd,
   float         c33,    c35    ;
   float                 c55    ;
   float xix,xiz,ztx,ztz;
- 
-  int k = nk2;
 
-    for (size_t i = ni1; i <= ni2; i++)
-    {
-      size_t iptr = i + k * siz_iz;
+  for (size_t i = ni1; i <= ni2; i++)
+  {
+    size_t iptr = i + nk2 * siz_iz;
 
-      xix = xi_x[iptr];
-      xiz = xi_z[iptr];
-      ztx = zt_x[iptr];
-      ztz = zt_z[iptr];
-      
-      c11 = c11d[iptr];
-      c13 = c13d[iptr];
-      c15 = c15d[iptr];
-      c33 = c33d[iptr];
-      c35 = c35d[iptr];
-      c55 = c55d[iptr];
+    xix = xi_x[iptr];
+    xiz = xi_z[iptr];
+    ztx = zt_x[iptr];
+    ztz = zt_z[iptr];
+    
+    c11 = c11d[iptr];
+    c13 = c13d[iptr];
+    c15 = c15d[iptr];
+    c33 = c33d[iptr];
+    c35 = c35d[iptr];
+    c55 = c55d[iptr];
 
-      // first dim: irow; sec dim: jcol, as Fortran code
-      A[0][0] = (c11*ztx+c15*ztz)*ztx + (c15*ztx+c55*ztz)*ztz;
-      A[1][0] = (c15*ztx+c55*ztz)*ztx + (c13*ztx+c35*ztz)*ztz;
+    // first dim: irow; sec dim: jcol, as Fortran code
+    A[0][0] = (c11*ztx+c15*ztz)*ztx + (c15*ztx+c55*ztz)*ztz;
+    A[1][0] = (c15*ztx+c55*ztz)*ztx + (c13*ztx+c35*ztz)*ztz;
 
-      A[0][1] = (c15*ztx+c13*ztz)*ztx + (c55*ztx+c35*ztz)*ztz; 
-      A[1][1] = (c55*ztx+c35*ztz)*ztx + (c35*ztx+c33*ztz)*ztz; 
+    A[0][1] = (c15*ztx+c13*ztz)*ztx + (c55*ztx+c35*ztz)*ztz; 
+    A[1][1] = (c55*ztx+c35*ztz)*ztx + (c35*ztx+c33*ztz)*ztz; 
 
-      fdlib_math_invert2x2(A);
-                                                       
-      B[0][0] = (c11*xix+c15*xiz)*ztx + (c15*xix+c55*xiz)*ztz;
-      B[1][0] = (c15*xix+c55*xiz)*ztx + (c13*xix+c35*xiz)*ztz;
+    fdlib_math_invert2x2(A);
+                                                     
+    B[0][0] = (c11*xix+c15*xiz)*ztx + (c15*xix+c55*xiz)*ztz;
+    B[1][0] = (c15*xix+c55*xiz)*ztx + (c13*xix+c35*xiz)*ztz;
 
-      B[0][1] = (c15*xix+c13*xiz)*ztx + (c55*xix+c35*xiz)*ztz; 
-      B[1][1] = (c55*xix+c35*xiz)*ztx + (c35*xix+c33*xiz)*ztz; 
-       
-      fdlib_math_matmul2x2(A, B, AB);
+    B[0][1] = (c15*xix+c13*xiz)*ztx + (c55*xix+c35*xiz)*ztz; 
+    B[1][1] = (c55*xix+c35*xiz)*ztx + (c35*xix+c33*xiz)*ztz; 
+     
+    fdlib_math_matmul2x2(A, B, AB);
 
-      size_t ij = (i) * 4;
+    size_t ij = i * 4;
 
-      // save into mat
-      for(int irow = 0; irow < 2; irow++)
-        for(int jcol = 0; jcol < 2; jcol++){
-          vecVx2Vz[ij + irow*2 + jcol] = -AB[irow][jcol];
-        }
+    // save into mat
+    for(int irow = 0; irow < 2; irow++){
+      for(int jcol = 0; jcol < 2; jcol++){
+        vecVx2Vz[ij + irow*2 + jcol] = -AB[irow][jcol];
+      }
     }
+  }
 
   return ierr;
 }

@@ -14,7 +14,7 @@
 #include "md_t.h"
 
 int
-md_init(gd_t *gd, md_t *md, int media_type, int visco_type)
+md_init(gd_t *gd, md_t *md, int media_type, int visco_type, int nmaxwell)
 {
   int ierr = 0;
 
@@ -47,11 +47,10 @@ md_init(gd_t *gd, md_t *md, int media_type, int visco_type)
   md->visco_type = visco_type;
   if (visco_type == CONST_VISCO_GRAVES_QS) {
    md->ncmp += 1;
-  } 
- // else {
- //     fprintf(stderr,"ERROR: visco_type=%d is not implemented\n",visco_type);
- //     exit(1);
- // }
+  } else if(visco_type == CONST_VISCO_GMB) { 
+    md->nmaxwell = nmaxwell;
+    md->ncmp += 2*md->nmaxwell+2;
+  }
 
   /*
    * 0: rho
@@ -77,6 +76,14 @@ md_init(gd_t *gd, md_t *md, int media_type, int visco_type)
   char **cmp_name = (char **) fdlib_mem_malloc_2l_char(md->ncmp,
                                                        CONST_MAX_STRLEN,
                                                        "medium_init");
+
+ if (visco_type == CONST_VISCO_GMB) 
+ {
+    md->Ylam = (float **) malloc(md->nmaxwell*sizeof(float *));
+    md->Ymu  = (float **) malloc(md->nmaxwell*sizeof(float *));
+    md->wl   = (float *)  malloc(md->nmaxwell*sizeof(float ));
+ }
+
 
   // set pos
   for (int icmp=0; icmp < md->ncmp; icmp++)
@@ -161,6 +168,28 @@ md_init(gd_t *gd, md_t *md, int media_type, int visco_type)
     icmp += 1;
     sprintf(cmp_name[icmp],"%s","Qs");
     md->Qs = md->v3d + cmp_pos[icmp];
+  }
+
+  // plus Qp,Qs,Ylam,Ymu
+  if (visco_type == CONST_VISCO_GMB) {
+    icmp += 1;
+    sprintf(cmp_name[icmp],"%s","Qp");
+    md->Qp = md->v3d + cmp_pos[icmp];
+
+    icmp += 1;
+    sprintf(cmp_name[icmp],"%s","Qs");
+    md->Qs = md->v3d + cmp_pos[icmp];
+
+    for(int i=0; i < md->nmaxwell; i++)
+    { 
+      icmp += 1;
+      sprintf(cmp_name[icmp],"%s%d","Ylam",i+1);
+      md->Ylam[i] = md->v3d + cmp_pos[icmp];
+
+      icmp += 1;
+      sprintf(cmp_name[icmp],"%s%d","Ymu",i+1);
+      md->Ymu[i] = md->v3d + cmp_pos[icmp];
+    }
   }
   
   // set pointer
@@ -399,8 +428,7 @@ md_gen_test_el_aniso(md_t *md)
 
         md->rho[iptr] = rho;
 
-	      //md->c11[iptr] = 25.2*1e9;//lam + 2.0f*mu;
-	      md->c11[iptr] = 2*25.2*1e9;//lam + 2.0f*mu;
+	      md->c11[iptr] = 25.2*1e9;//lam + 2.0f*mu;
 	      md->c13[iptr] = 10.9620*1e9;//lam;
 	      md->c15[iptr] = 0.0;
 	      md->c33[iptr] = 18.0*1e9;//lam + 2.0f*mu;
@@ -439,6 +467,31 @@ md_gen_test_Qs(md_t *md, float Qs_freq)
   return ierr;
 }
 
+int
+md_gen_test_GMB(md_t *md)
+{
+  int ierr = 0;
+
+  int nx = md->nx;
+  int nz = md->nz;
+  int siz_iz  = md->siz_iz;
+
+  float *Qs = md->Qs;
+  float *Qp = md->Qp;
+
+  for (size_t k=0; k<nz; k++)
+  {
+    for (size_t i=0; i<nx; i++)
+    {
+      size_t iptr = i + k * siz_iz;
+      Qs[iptr] = 4;
+      Qp[iptr] = 8;
+    }
+  }
+
+  return ierr;
+}
+
 /*
  * convert rho to slowness to reduce number of arithmetic cal
  */
@@ -453,6 +506,279 @@ md_rho_to_slow(float *restrict rho, size_t siz_volume)
       rho[iptr] = 1.0 / rho[iptr];
     } else {
       rho[iptr] = 0.0;
+    }
+  }
+
+  return ierr;
+}
+
+int 
+md_vis_GMB_cal_Y(md_t *md, float freq, float fmin, float fmax)
+{
+  int ierr = 0;
+
+  md->visco_GMB_freq = freq;
+  md->visco_GMB_fmin = fmin;
+  md->visco_GMB_fmax = fmax;
+
+  int kmax = 2*md->nmaxwell-1;
+  float wr = 2*PI*md->visco_GMB_freq;
+  float wmin = 2*PI*md->visco_GMB_fmin;
+  float wmax = 2*PI*md->visco_GMB_fmax;
+  float wratio = wmax/wmin;
+
+  int nmaxwell = md->nmaxwell;
+  int nx = md->nx;
+  int nz = md->nz;
+  int siz_iz  = md->siz_iz;
+
+  float *wk = (float *) fdlib_mem_calloc_1d_float(kmax,0,
+                                                  "medium_visco_iso_cal");
+  float *YP = (float *) fdlib_mem_calloc_1d_float(nmaxwell,0,
+                                                  "medium_visco_iso_cal");
+  float *YS = (float *) fdlib_mem_calloc_1d_float(nmaxwell,0,
+                                                  "medium_visco_iso_cal");
+  float **GP = (float **) fdlib_mem_calloc_2l_float(kmax, nmaxwell, 0,
+                                                   "medium_visco_iso_cal");
+  float **GS = (float **) fdlib_mem_calloc_2l_float(kmax, nmaxwell, 0,
+                                                   "medium_visco_iso_cal");
+  for(int k=0; k<kmax; k++)
+  {
+    wk[k] = wmin*pow(wratio,k/(float)(kmax-1));
+  }
+
+  float *wl = md->wl;
+  float *Qp = md->Qp;
+  float *Qs = md->Qs; 
+  float *lambda = md->lambda;
+  float *mu = md->mu;
+  float QP1,QS1,theta1,theta2,thetatmp,lam,muu;
+  float R, kappa,muunrelax;
+
+  for(int n=0; n<nmaxwell; n++)
+  {
+    wl[n] = wk[2*n];
+  }
+
+  for (size_t k=0; k<nz; k++)
+  {
+    for(size_t i=0; i<nx; i++)
+    {
+      size_t iptr = i + k * siz_iz;
+      QP1 = 1.0/Qp[iptr];
+      QS1 = 1.0/Qs[iptr];
+      lam = lambda[iptr];
+      muu = mu[iptr];
+      for(size_t m=0; m<kmax; m++)
+      {
+        for(size_t n=0; n<nmaxwell; n++) 
+        {
+          GP[m][n] = (wl[n]*wk[m]+pow(wl[n],2)*QP1)/(pow(wl[n],2)+pow(wk[m],2));
+          GS[m][n] = (wl[n]*wk[m]+pow(wl[n],2)*QS1)/(pow(wl[n],2)+pow(wk[m],2));
+        }
+      }
+
+      md_visco_LS(GP,YP,QP1,kmax,nmaxwell);
+      md_visco_LS(GS,YS,QS1,kmax,nmaxwell);
+
+      //P
+      theta1 = 0.0;
+      theta2 = 0.0;
+      thetatmp = 0.0;
+
+      for(int n=0; n<nmaxwell; n++)
+      {
+        thetatmp = thetatmp+YP[n]/(1+pow(wr/wl[n],2));
+      }
+      theta1 = 1-thetatmp;
+  
+      thetatmp = 0.0;
+      for(int n=0; n<nmaxwell; n++)
+      {
+        thetatmp = thetatmp+YP[n]*wr/wl[n]/(1+pow(wr/wl[n],2));
+      }
+      theta2 = thetatmp;
+
+      R = sqrt(pow(theta1,2)+pow(theta2,2));
+      kappa = (lam+2*muu)*(R+theta1)/(2*pow(R,2));
+
+      //S 
+      theta1 = 0.0;
+      theta2 = 0.0;
+      thetatmp = 0.0;
+    
+      for(int n=0; n<nmaxwell; n++)
+      {
+        thetatmp = thetatmp+YS[n]/(1+pow(wr/wl[n],2));
+      }
+      theta1 = 1-thetatmp;
+    
+      thetatmp = 0.0;
+      for(int n=0; n<nmaxwell; n++)
+      {
+        thetatmp = thetatmp+YS[n]*wr/wl[n]/(1+pow(wr/wl[n],2));
+      }
+      theta2 = thetatmp;
+    
+      R = sqrt(pow(theta1,2)+pow(theta2,2));
+      muunrelax = muu*(R+theta1)/(2*pow(R,2));
+    
+      md->mu[iptr] = muunrelax;
+    
+      md->lambda[iptr] = kappa-2*muunrelax;
+    
+      for(int n=0; n<nmaxwell; n++)
+      {
+        md->Ylam[n][iptr] = (1+2*md->mu[iptr]/md->lambda[iptr])*YP[n]-2*md->mu[iptr]/md->lambda[iptr]*YS[n];
+        md->Ymu[n][iptr]  = YS[n];
+      }
+    }
+  }
+  printf("YP1=%f,YP2=%f\n",YP[0],YP[1]);
+  printf("YS1=%f,YS2=%f\n",YS[0],YS[1]);
+  
+  printf("lam=%f\n",lam);
+  printf("muu=%f\n",muu);
+  printf("kappa=%f\n",kappa);
+  printf("lambda=%f\n",md->lambda[150]);
+  printf("mu=%f\n",md->mu[150]);
+  printf("Ylam1=%f\n",md->Ylam[0][150]);
+  printf("Ylam2=%f\n",md->Ylam[1][150]);
+  printf("Ymu1=%f\n",md->Ymu[0][150]);
+  printf("Ymu2=%f\n",md->Ymu[1][150]);
+  
+  free(YP);
+  free(YS);
+  free(wk);
+
+  fdlib_mem_free_2l_float(GP, kmax, "visco_GP");
+  fdlib_mem_free_2l_float(GS, kmax, "visco_GS");
+  
+  return ierr;
+
+}
+
+int 
+md_visco_LS(float **restrict input, float *restrict output, float d, int m, int n)
+{
+  // G=md,m=(G^TG)^(-1)G^Td
+
+  int ierr = 0;
+
+  float trans[VISCO_LS_MAXSIZE][VISCO_LS_MAXSIZE];
+  float multi[VISCO_LS_MAXSIZE][VISCO_LS_MAXSIZE];
+  float inver[VISCO_LS_MAXSIZE][VISCO_LS_MAXSIZE];
+
+  for(int i=0; i<n; i++)
+  {
+    for(int j=0; j<n; j++)
+    {
+      if(i==j)
+          inver[i][j] = 1;
+      else
+          inver[i][j] = 0;
+    }
+  }
+  
+  // transposition
+  for(int i=0; i<n; i++)
+  {
+    for(int j=0; j<m; j++)
+    {
+      trans[i][j] = input[j][i];
+    }
+  }
+
+  for(int i=0; i<n; i++)
+  {
+    for(int j=0; j<n; j++)
+    {
+      multi[i][j] = 0;
+      for(int k=0; k<m; k++)
+      {
+        multi[i][j] = multi[i][j]+trans[i][k]*input[k][j];
+      }
+    }
+  }
+
+  md_visco_LS_mat_inv(multi,inver,n);
+
+  for(int i=0; i<n; i++)
+  {
+    for(int j=0; j<m; j++)
+    {
+      multi[i][j] = 0;
+      for(int k=0; k<n; k++)
+      {
+        multi[i][j] = multi[i][j]+inver[i][k]*trans[k][j];
+      }
+    }
+  }
+
+  float sum;
+  for(int i=0; i<n; i++)
+  {
+    sum = 0.0;
+    for(int j=0; j<m; j++)
+    {
+      sum = sum+multi[i][j]*d;
+    }
+    output[i] = sum;
+  }
+
+  return ierr;
+}
+
+int 
+md_visco_LS_mat_inv(float matrix[][VISCO_LS_MAXSIZE], float inverse[][VISCO_LS_MAXSIZE], int n)
+{
+  int ierr = 0;
+  
+  float tmp;
+  int j=0;
+
+  for(int k=0; k<n; k++)
+  {
+    if(matrix[k][k] == 0)
+    {
+      for(int jj=k+1; jj<n; jj++)
+      {
+        j = jj;
+        if(matrix[j][k]!=0) break;
+      }
+      if(j == n)
+      {
+        fprintf(stderr,"Error: Matrix is not inversible(Cal of visco coef)\n");
+        fflush(stderr);
+        exit(-1);
+      }
+      for(int i=0; i<n; i++)
+      {
+        tmp = matrix[k][i];
+        matrix[k][i] = matrix[j][i];
+        matrix[j][i] = tmp;
+        tmp = inverse[k][i];
+        inverse[k][i] = inverse[j][i];
+        inverse[j][i] = tmp;
+      }
+    }
+            
+    tmp = matrix[k][k];
+    for(int j=0; j<n; j++)
+    {
+      matrix[k][j] = matrix[k][j]/tmp;
+      inverse[k][j] = inverse[k][j]/tmp;
+    }
+    
+    for(int i=0; i<n; i++)
+    {
+      tmp = matrix[i][k];
+      for(j=0;j<n;j++)
+      {
+        if(i==k) break;
+        matrix[i][j] = matrix[i][j]-matrix[k][j]*tmp;
+        inverse[i][j] = inverse[i][j]-inverse[k][j]*tmp;
+      }
     }
   }
 

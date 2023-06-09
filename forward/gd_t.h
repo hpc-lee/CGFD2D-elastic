@@ -45,7 +45,7 @@ typedef struct {
   int ncmp;
   float *v3d; // allocated var
 
-  //to avoid ref x3d at different funcs
+  //to avoid ref x2d at different funcs
   float *x2d; // pointer to var
   float *z2d;
 
@@ -176,6 +176,14 @@ gd_curv_coord_to_local_indx(gd_t *gd,
                             float sx, float sz,
                             int *si, int *sk,
                             float *sx_inc, float *sz_inc);
+
+int
+gd_curv_depth_to_axis(gd_t *gd,
+                      float sx,
+                      float *sz);
+
+float
+linear_interp_1d(float ix, float *x, float *z);
 
 int
 gd_curv_coord2index_sample(float sx, float sz, 

@@ -13,7 +13,9 @@
 int 
 wav_init(gd_t *gd,
          wav_t *V,
-         int number_of_levels)
+         int number_of_levels,
+         int visco_type,
+         int nmaxwell)
 {
   int ierr = 0;
 
@@ -26,6 +28,15 @@ wav_init(gd_t *gd,
 
   V->siz_iz   = V->nx;
   V->siz_icmp  = V->nx * V->nz;
+
+  V->nmaxwell = nmaxwell;
+  V->visco_type = visco_type ;
+
+  if(visco_type == CONST_VISCO_GMB)
+  {
+    V->ncmp += 3*nmaxwell;  // Jxx Jzz Jxz
+  }
+
   V->siz_ilevel = V->siz_icmp * V->ncmp;
 
   // vars
@@ -38,7 +49,22 @@ wav_init(gd_t *gd,
   // name of each var
   char **cmp_name = (char **) fdlib_mem_malloc_2l_char(
                       V->ncmp, CONST_MAX_STRLEN, "w3d_name, wf_el3d_1st");
-  
+  if (visco_type == CONST_VISCO_GMB)
+  {
+    V->Jxx_pos = (size_t *) fdlib_mem_calloc_1d_sizet(
+                nmaxwell, 0, "Jxx_pos, wf_el3d_1st");
+    V->Jzz_pos = (size_t *) fdlib_mem_calloc_1d_sizet(
+                nmaxwell, 0, "Jzz_pos, wf_el3d_1st");
+    V->Jxz_pos = (size_t *) fdlib_mem_calloc_1d_sizet(
+                nmaxwell, 0, "Jxz_pos, wf_el3d_1st");
+    V->Jxx_seq = (size_t *) fdlib_mem_calloc_1d_sizet(
+                nmaxwell, 0, "Jxx_seq, wf_el3d_1st");
+    V->Jzz_seq = (size_t *) fdlib_mem_calloc_1d_sizet(
+                nmaxwell, 0, "Jzz_seq, wf_el3d_1st");
+    V->Jxz_seq = (size_t *) fdlib_mem_calloc_1d_sizet(
+                nmaxwell, 0, "Jxz_seq, wf_el3d_1st");
+  }
+
   // set value
   for (int icmp=0; icmp < V->ncmp; icmp++)
   {
@@ -78,6 +104,26 @@ wav_init(gd_t *gd,
   V->Txz_seq = 4;
   icmp += 1;
 
+  if (visco_type == CONST_VISCO_GMB) 
+  {
+    for(int i=0; i < nmaxwell; i++)
+    {
+      sprintf(cmp_name[icmp],"%s%d","Jxx",i+1);
+      V->Jxx_pos[i] = cmp_pos[icmp];
+      V->Jxx_seq[i] = icmp;
+      icmp += 1;
+  
+      sprintf(cmp_name[icmp],"%s%d","Jzz",i+1);
+      V->Jzz_pos[i] = cmp_pos[icmp];
+      V->Jzz_seq[i] = icmp;
+      icmp += 1;
+  
+      sprintf(cmp_name[icmp],"%s%d","Jxz",i+1);
+      V->Jxz_pos[i] = cmp_pos[icmp];
+      V->Jxz_seq[i] = icmp;
+      icmp += 1;
+    }
+  }
   // set pointer
   V->cmp_pos  = cmp_pos;
   V->cmp_name = cmp_name;

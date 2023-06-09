@@ -243,7 +243,7 @@ drv_rk_curv_col_allstep(
 
         // wavefield
         for (size_t iptr=0; iptr < wav->siz_ilevel; iptr++) {
-            w_tmp[iptr] = w_pre[iptr] + coef_a * w_rhs[iptr];
+            w_tmp[iptr] = w_pre[iptr] + RK5b1 * dt * w_rhs[iptr];
         }
 
         // apply Qs
@@ -259,7 +259,7 @@ drv_rk_curv_col_allstep(
               if (bdry->is_sides_pml[idim][iside]==1) {
                 bdrypml_auxvar_t *auxvar = &(bdry->auxvar[idim][iside]);
                 for (size_t iptr=0; iptr < auxvar->siz_ilevel; iptr++) {
-                  auxvar->tmp[iptr] = auxvar->pre[iptr] + coef_a * auxvar->rhs[iptr];
+                  auxvar->tmp[iptr] = auxvar->pre[iptr] + RK5b1 * dt * auxvar->rhs[iptr];
                 }
               }
             }
@@ -268,7 +268,8 @@ drv_rk_curv_col_allstep(
 
         // w_end
         for (size_t iptr=0; iptr < wav->siz_ilevel; iptr++) {
-            w_end[iptr] = w_pre[iptr] + coef_b * w_rhs[iptr];
+           // w_end[iptr] = w_pre[iptr] + coef_b * w_rhs[iptr];
+            w_end[iptr] = 0.0;
         }
         // pml_end
         if(bdry->is_enable_pml == 1)
@@ -278,21 +279,22 @@ drv_rk_curv_col_allstep(
               if (bdry->is_sides_pml[idim][iside]==1) {
                 bdrypml_auxvar_t *auxvar = &(bdry->auxvar[idim][iside]);
                 for (size_t iptr=0; iptr < auxvar->siz_ilevel; iptr++) {
-                  auxvar->end[iptr] = auxvar->pre[iptr] + coef_b * auxvar->rhs[iptr];
+            //      auxvar->end[iptr] = auxvar->pre[iptr] + coef_b * auxvar->rhs[iptr];
+                  auxvar->end[iptr] = 0.0;
                 }
               }
             }
           }
         }
       }
-      else if (istage<num_rk_stages-1)
+      else if (istage == 1)
       {
         float coef_a = rk_a[istage] * dt;
         float coef_b = rk_b[istage] * dt;
 
         // wavefield
         for (size_t iptr=0; iptr < wav->siz_ilevel; iptr++) {
-            w_tmp[iptr] = w_pre[iptr] + coef_a * w_rhs[iptr];
+            w_tmp[iptr] = RK5b2 * w_pre[iptr] + RK5b3 * w_tmp[iptr] + RK5b4  * dt * w_rhs[iptr];
         }
 
         // apply Qs
@@ -308,7 +310,7 @@ drv_rk_curv_col_allstep(
               if (bdry->is_sides_pml[idim][iside]==1) {
                 bdrypml_auxvar_t *auxvar = &(bdry->auxvar[idim][iside]);
                 for (size_t iptr=0; iptr < auxvar->siz_ilevel; iptr++) {
-                  auxvar->tmp[iptr] = auxvar->pre[iptr] + coef_a * auxvar->rhs[iptr];
+                  auxvar->tmp[iptr] = RK5b2 * auxvar->pre[iptr] + RK5b3 * auxvar->tmp[iptr] + RK5b4 *dt * auxvar->rhs[iptr];
                 }
               }
             }
@@ -317,7 +319,8 @@ drv_rk_curv_col_allstep(
 
         // w_end
         for (size_t iptr=0; iptr < wav->siz_ilevel; iptr++) {
-            w_end[iptr] += coef_b * w_rhs[iptr];
+        //    w_end[iptr] += coef_b * w_rhs[iptr];
+            w_end[iptr] += RK5b11 * w_tmp[iptr];
         }
         // pml_end
         if(bdry->is_enable_pml == 1)
@@ -327,7 +330,110 @@ drv_rk_curv_col_allstep(
               if (bdry->is_sides_pml[idim][iside]==1) {
                 bdrypml_auxvar_t *auxvar = &(bdry->auxvar[idim][iside]);
                 for (size_t iptr=0; iptr < auxvar->siz_ilevel; iptr++) {
-                  auxvar->end[iptr] += coef_b * auxvar->rhs[iptr];
+        //          auxvar->end[iptr] += coef_b * auxvar->rhs[iptr];
+                  auxvar->end[iptr] += RK5b11 * auxvar->tmp[iptr];
+                }
+              }
+            }
+          }
+        }
+      }
+      else if (istage == 2)
+      {
+        float coef_a = rk_a[istage] * dt;
+        float coef_b = rk_b[istage] * dt;
+
+        // wavefield
+        for (size_t iptr=0; iptr < wav->siz_ilevel; iptr++) {
+            w_tmp[iptr] = RK5b5 * w_pre[iptr] + RK5b6 * w_tmp[iptr] + RK5b7 * dt *w_rhs[iptr];
+        }
+
+        // apply Qs
+        //if (md->visco_type == CONST_VISCO_GRAVES) {
+        //  sv_curv_graves_Qs(w_tmp, wave->ncmp, gd, md);
+        //}
+
+        // pml_tmp
+        if(bdry->is_enable_pml == 1)
+        {
+          for (int idim=0; idim<CONST_NDIM; idim++) {
+            for (int iside=0; iside<2; iside++) {
+              if (bdry->is_sides_pml[idim][iside]==1) {
+                bdrypml_auxvar_t *auxvar = &(bdry->auxvar[idim][iside]);
+                for (size_t iptr=0; iptr < auxvar->siz_ilevel; iptr++) {
+                  auxvar->tmp[iptr] = RK5b5 * auxvar->pre[iptr] + RK5b6 * auxvar->tmp[iptr] + RK5b7 * dt * auxvar->rhs[iptr];
+                }
+              }
+            }
+          }
+        }
+
+        // w_end
+        for (size_t iptr=0; iptr < wav->siz_ilevel; iptr++) {
+        //    w_end[iptr] += coef_b * w_rhs[iptr];
+            w_end[iptr] += RK5b12 * w_tmp[iptr];
+        }
+        // pml_end
+        if(bdry->is_enable_pml == 1)
+        {
+          for (int idim=0; idim<CONST_NDIM; idim++) {
+            for (int iside=0; iside<2; iside++) {
+              if (bdry->is_sides_pml[idim][iside]==1) {
+                bdrypml_auxvar_t *auxvar = &(bdry->auxvar[idim][iside]);
+                for (size_t iptr=0; iptr < auxvar->siz_ilevel; iptr++) {
+        //          auxvar->end[iptr] += coef_b * auxvar->rhs[iptr];
+                  auxvar->end[iptr] += RK5b12 * auxvar->tmp[iptr];
+                }
+              }
+            }
+          }
+        }
+      }
+      else if (istage == 3)
+      {
+        float coef_a = rk_a[istage] * dt;
+        float coef_b = rk_b[istage] * dt;
+
+        // wavefield
+        for (size_t iptr=0; iptr < wav->siz_ilevel; iptr++) {
+            w_tmp[iptr] = RK5b8 * w_pre[iptr] + RK5b9 * w_tmp[iptr] + RK5b10 * dt * w_rhs[iptr];
+        }
+
+        // apply Qs
+        //if (md->visco_type == CONST_VISCO_GRAVES) {
+        //  sv_curv_graves_Qs(w_tmp, wave->ncmp, gd, md);
+        //}
+
+        // pml_tmp
+        if(bdry->is_enable_pml == 1)
+        {
+          for (int idim=0; idim<CONST_NDIM; idim++) {
+            for (int iside=0; iside<2; iside++) {
+              if (bdry->is_sides_pml[idim][iside]==1) {
+                bdrypml_auxvar_t *auxvar = &(bdry->auxvar[idim][iside]);
+                for (size_t iptr=0; iptr < auxvar->siz_ilevel; iptr++) {
+                  auxvar->tmp[iptr] = RK5b8 * auxvar->pre[iptr] + RK5b9 * auxvar->tmp[iptr] + RK5b10 * dt * auxvar->rhs[iptr];
+                }
+              }
+            }
+          }
+        }
+
+        // w_end
+        for (size_t iptr=0; iptr < wav->siz_ilevel; iptr++) {
+        //    w_end[iptr] += coef_b * w_rhs[iptr];
+            w_end[iptr] += RK5b14 * w_tmp[iptr] + RK5b13 * dt * w_rhs[iptr];
+        }
+        // pml_end
+        if(bdry->is_enable_pml == 1)
+        {
+          for (int idim=0; idim<CONST_NDIM; idim++) {
+            for (int iside=0; iside<2; iside++) {
+              if (bdry->is_sides_pml[idim][iside]==1) {
+                bdrypml_auxvar_t *auxvar = &(bdry->auxvar[idim][iside]);
+                for (size_t iptr=0; iptr < auxvar->siz_ilevel; iptr++) {
+        //          auxvar->end[iptr] += coef_b * auxvar->rhs[iptr];
+                  auxvar->end[iptr] += RK5b14 * auxvar->tmp[iptr] + RK5b13 *dt *w_rhs[iptr];
                 }
               }
             }
@@ -340,7 +446,7 @@ drv_rk_curv_col_allstep(
 
         // wavefield
         for (size_t iptr=0; iptr < wav->siz_ilevel; iptr++) {
-            w_end[iptr] += coef_b * w_rhs[iptr];
+            w_end[iptr] += RK5b15 * dt * w_rhs[iptr];
         }
 
         // apply Qs
@@ -356,7 +462,7 @@ drv_rk_curv_col_allstep(
               if (bdry->is_sides_pml[idim][iside]==1) {
                 bdrypml_auxvar_t *auxvar = &(bdry->auxvar[idim][iside]);
                 for (size_t iptr=0; iptr < auxvar->siz_ilevel; iptr++) {
-                  auxvar->end[iptr] += coef_b * auxvar->rhs[iptr];
+                  auxvar->end[iptr] += RK5b15 * dt * auxvar->rhs[iptr];
                 }
               }
             }

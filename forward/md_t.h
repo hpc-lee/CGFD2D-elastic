@@ -2,6 +2,7 @@
 #define MD_EL_ISO_H
 
 #include "gd_t.h"
+#include "par_t.h"
 
 /*************************************************
  * structure
@@ -33,7 +34,15 @@ typedef struct {
   float *mu;
 
   // for visco attenuation
+  int nmaxwell;
+  float visco_GMB_freq;
+  float visco_GMB_fmin;
+  float visco_GMB_fmax;
   float *Qs;
+  float *Qp;
+  float **Ylam; // float *Ylam[nmaxwell];
+  float **Ymu;  // float *Ymu[nmaxwell];
+  float *wl;
 
   // for anisotropic media
   float *c11;
@@ -52,7 +61,7 @@ typedef struct {
  *************************************************/
 
 int
-md_init(gd_t *gd, md_t *md, int media_type, int visco_type);
+md_init(gd_t *gd, md_t *md, int media_type, int visco_type, int nmaxwell);
 
 int
 md_import(md_t *md, char *in_dir);
@@ -72,12 +81,24 @@ int
 md_gen_test_el_vti(md_t *md);
 
 int
-md_gen_test_Qs(md_t *md, float Qs_freq);
-
-int
 md_gen_test_el_aniso(md_t *md);
 
 int
+md_gen_test_Qs(md_t *md, float Qs_freq);
+
+int
+md_gen_test_GMB(md_t *md);
+
+int
 md_rho_to_slow(float *restrict rho, size_t siz_volume);
+
+int 
+md_vis_GMB_cal_Y(md_t *md, float freq, float fmin, float fmax);
+
+int 
+md_visco_LS(float **restrict input, float *restrict output, float d, int m, int n);
+
+int 
+md_visco_LS_mat_inv(float matrix[][VISCO_LS_MAXSIZE], float inverse[][VISCO_LS_MAXSIZE], int n);
 
 #endif

@@ -42,6 +42,7 @@ int
 bdry_free_set(gd_t    *gd,
               bdry_t      *bdryfree,
               int   in_is_sides[][2],
+              int visco_type,
               const int verbose)
 {
   int ierr = 0;
@@ -67,13 +68,27 @@ bdry_free_set(gd_t    *gd,
     } // iside
   } // idim
 
-  // following only implement z2 (top) right now
-  float *vecVx2Vz = (float *)fdlib_mem_calloc_1d_float(
-                                      siz_iz * CONST_NDIM * CONST_NDIM,
-                                      0.0,
-                                      "bdry_free_set");
-
+  float *vecVx2Vz = NULL;
+  float *vecA = NULL;
+  if (bdryfree->is_enable_free == 1)
+  {
+    // following only implement z2 (top) right now
+    vecVx2Vz = (float *)fdlib_mem_calloc_1d_float(
+                                        siz_iz * CONST_NDIM * CONST_NDIM,
+                                        0.0,
+                                        "bdry_free_set");
+    // vecA is malloc for vis
+    if (visco_type == CONST_VISCO_GMB)
+    {
+      vecA = (float *)fdlib_mem_calloc_1d_float(
+                                       siz_iz * CONST_NDIM * CONST_NDIM,
+                                       0.0,
+                                       "bdry_free_set");
+    }
+  }
+  bdryfree->vecA = vecA;
   bdryfree->vecVx2Vz2 = vecVx2Vz;
+
 
   return ierr;
 }
@@ -335,8 +350,8 @@ bdry_cal_abl_len_dh(gd_t *gd,
   // curv grid needs avg
   else if (gd->type == GD_TYPE_CURV)
   {
-    float *x3d = gd->x2d;
-    float *z3d = gd->z2d;
+    float *x2d = gd->x2d;
+    float *z2d = gd->z2d;
 
     double L  = 0.0;
     double dh = 0.0;
@@ -347,14 +362,14 @@ bdry_cal_abl_len_dh(gd_t *gd,
       for (int k=abs_nk1; k<=abs_nk2; k++)
       {
         int iptr = abs_ni1 + k * siz_iz;
-        double x0 = x3d[iptr];
-        double z0 = z3d[iptr];
+        double x0 = x2d[iptr];
+        double z0 = z2d[iptr];
         for (int i=abs_ni1+1; i<=abs_ni2; i++)
         {
           int iptr = i + k * siz_iz;
 
-          double x1 = x3d[iptr];
-          double z1 = z3d[iptr];
+          double x1 = x2d[iptr];
+          double z1 = z2d[iptr];
 
           L += sqrt( (x1-x0)*(x1-x0) + (z1-z0)*(z1-z0) );
 
@@ -372,14 +387,14 @@ bdry_cal_abl_len_dh(gd_t *gd,
       for (int i=abs_ni1; i<=abs_ni2; i++)
       {
         int iptr = i + abs_nk1 * siz_iz;
-        double x0 = x3d[iptr];
-        double z0 = z3d[iptr];
+        double x0 = x2d[iptr];
+        double z0 = z2d[iptr];
         for (int k=abs_nk1+1; k<=abs_nk2; k++)
         {
           int iptr = i + k * siz_iz;
 
-          double x1 = x3d[iptr];
-          double z1 = z3d[iptr];
+          double x1 = x2d[iptr];
+          double z1 = z2d[iptr];
 
           L += sqrt( (x1-x0)*(x1-x0) + (z1-z0)*(z1-z0) );
 

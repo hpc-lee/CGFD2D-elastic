@@ -32,6 +32,8 @@
 #define PAR_SOURCE_JSON  1
 #define PAR_SOURCE_FILE  3
 
+#define VISCO_LS_MAXSIZE  20
+
 typedef struct{
 
   //-- dirs and file name
@@ -126,6 +128,10 @@ typedef struct{
   char visco_type[PAR_MAX_STRLEN]; // graves_Qs
   int  visco_itype; // graves_Qs
   float visco_Qs_freq;
+  int nmaxwell;
+  float fmax;
+  float fmin;
+  float fr;
 
   // source
   //int source_input_itype;

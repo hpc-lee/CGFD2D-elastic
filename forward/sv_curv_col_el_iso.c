@@ -559,13 +559,12 @@ sv_curv_col_el_iso_rhs_cfspml(
               if (bdry->is_sides_free[CONST_NDIM-1][1]==1 && k==nk2)
               {
                 // zeta derivatives
-                int ij = (i )*4;
+                int ij = i*4;
                 Dx_DzVx = vecVx2Vz[ij+2*0+0] * DxVx
                         + vecVx2Vz[ij+2*0+1] * DxVz;
 
                 Dx_DzVz = vecVx2Vz[ij+2*1+0] * DxVx
                         + vecVx2Vz[ij+2*1+1] * DxVz;
-
                 // metric
                 ztx = zt_x[iptr];
                 ztz = zt_z[iptr];
@@ -580,6 +579,7 @@ sv_curv_col_el_iso_rhs_cfspml(
                 hTxz_rhs = mu *(
                              ztz*Dx_DzVx + ztx*Dx_DzVz
                             );
+
 
                 // make corr to Hooke's equatoin
                 hTxx[iptr] += (coef_B - 1.0) * hTxx_rhs;
@@ -705,44 +705,43 @@ sv_curv_col_el_iso_dvh2dvz(gd_t        *gd,
   float A[2][2], B[2][2];
   float AB[2][2];
 
-  int k = nk2;
+  for (size_t i = ni1; i <= ni2; i++)
+  {
+    size_t iptr = i + nk2 * siz_iz;
 
-    for (size_t i = ni1; i <= ni2; i++)
-    {
-      size_t iptr = i + k * siz_iz;
+    float e11 = xi_x[iptr];
+    float e12 = xi_z[iptr];
+    float e21 = zt_x[iptr];
+    float e22 = zt_z[iptr];
 
-      float e11 = xi_x[iptr];
-      float e12 = xi_z[iptr];
-      float e21 = zt_x[iptr];
-      float e22 = zt_z[iptr];
+    float lam    = lam3d[iptr];
+    float miu    =  mu3d[iptr];
+    float lam2mu = lam + 2.0f * miu;
 
-      float lam    = lam3d[iptr];
-      float miu    =  mu3d[iptr];
-      float lam2mu = lam + 2.0f * miu;
+    // first dim: irow; sec dim: jcol, as Fortran code
+    A[0][0]=lam2mu*e21*e21+miu*e22*e22;
+    A[0][1]=lam*e21*e22+miu*e22*e21;
+    A[1][0]=lam*e22*e21+miu*e21*e22;
+    A[1][1]=lam2mu*e22*e22+miu*e21*e21;
 
-      // first dim: irow; sec dim: jcol, as Fortran code
-      A[0][0]=lam2mu*e21*e21+miu*e22*e22;
-      A[0][1]=lam*e21*e22+miu*e22*e21;
-      A[1][0]=lam*e22*e21+miu*e21*e22;
-      A[1][1]=lam2mu*e22*e22+miu*e21*e21;
+    fdlib_math_invert2x2(A);
 
-      fdlib_math_invert2x2(A);
+    B[0][0]=-lam2mu*e21*e11-miu*e22*e12;
+    B[0][1]=-lam*e21*e12-miu*e22*e11;
+    B[1][0]=-lam*e22*e11-miu*e21*e12;
+    B[1][1]=-lam2mu*e22*e12-miu*e21*e11;
 
-      B[0][0]=-lam2mu*e21*e11-miu*e22*e12;
-      B[0][1]=-lam*e21*e12-miu*e22*e11;
-      B[1][0]=-lam*e22*e11-miu*e21*e12;
-      B[1][1]=-lam2mu*e22*e12-miu*e21*e11;
+    fdlib_math_matmul2x2(A, B, AB);
 
-      fdlib_math_matmul2x2(A, B, AB);
+    size_t ij = i * 4;
 
-      size_t ij = (i) * 4;
-
-      // save into mat
-      for(int irow = 0; irow < 2; irow++)
-        for(int jcol = 0; jcol < 2; jcol++){
-          vecVx2Vz[ij + irow*2 + jcol] = AB[irow][jcol];
-        }
+    // save into mat
+    for(int irow = 0; irow < 2; irow++){
+      for(int jcol = 0; jcol < 2; jcol++){
+        vecVx2Vz[ij + irow*2 + jcol] = AB[irow][jcol];
+      }
     }
+  }
 
   return ierr;
 }
