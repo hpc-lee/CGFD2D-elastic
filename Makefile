@@ -13,12 +13,8 @@
 # compiler
 #-------------------------------------------------------------------------------
 
-CC     := /data3/lihl/software/gcc-10.3.0-compile/bin/gcc
-CXX    := /data3/lihl/software/gcc-10.3.0-compile/bin/g++
-NETCDF := /data3/lihl/software/disable-netcdf-4.4.1
-#CC     := /opt/apps/openmpi/4.1.2-cuda-aware/bin/mpicc
-#CXX    := /opt/apps/openmpi/4.1.2-cuda-aware/bin/mpicxx
-#NETCDF := /opt/apps/gcc-4.8.5/disable-netcdf-4.4.1
+CC     := $(GNUHOME)/bin/gcc
+CXX    := $(GNUHOME)/bin/g++
 
 #-- 
 CFLAGS := -I$(NETCDF)/include -I./lib/ -I./forward/ -I./media/  $(CFLAGS)
