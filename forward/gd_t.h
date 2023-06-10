@@ -105,6 +105,10 @@ gd_curv_metric_cal(gd_t        *gdcurv,
                    gdcurv_metric_t *metric,
                    int fd_len, int *restrict fd_indx, float *restrict fd_coef);
 
+int mirror_symmetry(gd_t *gdcurv,float *g2d, int ncmp);
+
+int geometric_symmetry(gd_t *gdcurv,float *g2d, int ncmp);
+
 void
 gd_curv_gen_cart(gd_t *gdcurv,
                  float dx, float x0,

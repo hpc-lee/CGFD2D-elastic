@@ -179,90 +179,155 @@ gd_curv_metric_cal(gd_t        *gdcurv,
   }
 
   for (size_t k = nk1; k <= nk2; k++){
-      for (size_t i = ni1; i <= ni2; i++)
-      {
-        size_t iptr = i + k * siz_iz;
+    for (size_t i = ni1; i <= ni2; i++)
+    {
+      size_t iptr = i + k * siz_iz;
 
-        x_xi = 0.0; x_zt = 0.0;
-        z_xi = 0.0; z_zt = 0.0;
+      x_xi = 0.0; x_zt = 0.0;
+      z_xi = 0.0; z_zt = 0.0;
 
-        M_FD_SHIFT(x_xi, x2d, iptr, fd_len, lfdx_shift, lfd_coef, n_fd);
-        M_FD_SHIFT(z_xi, z2d, iptr, fd_len, lfdx_shift, lfd_coef, n_fd);
+      M_FD_SHIFT(x_xi, x2d, iptr, fd_len, lfdx_shift, lfd_coef, n_fd);
+      M_FD_SHIFT(z_xi, z2d, iptr, fd_len, lfdx_shift, lfd_coef, n_fd);
 
-        M_FD_SHIFT(x_zt, x2d, iptr, fd_len, lfdz_shift, lfd_coef, n_fd);
-        M_FD_SHIFT(z_zt, z2d, iptr, fd_len, lfdz_shift, lfd_coef, n_fd);
+      M_FD_SHIFT(x_zt, x2d, iptr, fd_len, lfdz_shift, lfd_coef, n_fd);
+      M_FD_SHIFT(z_zt, z2d, iptr, fd_len, lfdz_shift, lfd_coef, n_fd);
 
-        vec1[0] = x_xi; vec1[1] = z_xi; vec1[2] = 0.0;
-        vec2[0] = x_zt; vec2[1] = z_zt; vec2[2] = 0.0;
-        vec3[0] = 0.0 ; vec3[1] = 0.0 ; vec3[2] = 1.0;
+      vec1[0] = x_xi; vec1[1] = z_xi; vec1[2] = 0.0;
+      vec2[0] = x_zt; vec2[1] = z_zt; vec2[2] = 0.0;
+      vec3[0] = 0.0 ; vec3[1] = 0.0 ; vec3[2] = 1.0;
 
-        // jac
-        fdlib_math_cross_product(vec1, vec2, vecg);
-        jac = fdlib_math_dot_product(vecg, vecg);
-        jac = sqrt(jac);
-        jac2d[iptr]  = jac;
+      // jac
+      fdlib_math_cross_product(vec1, vec2, vecg);
+      jac = fdlib_math_dot_product(vecg, vecg);
+      jac = sqrt(jac);
+      jac2d[iptr]  = jac;
 
-        // xi_i
-        fdlib_math_cross_product(vec2, vec3, vecg);
-        xi_x[iptr] = vecg[0] / jac;
-        xi_z[iptr] = vecg[1] / jac;
+      // xi_i
+      fdlib_math_cross_product(vec2, vec3, vecg);
+      xi_x[iptr] = vecg[0] / jac;
+      xi_z[iptr] = vecg[1] / jac;
 
-        // zt_i
-        fdlib_math_cross_product(vec3, vec1, vecg);
-        zt_x[iptr] = vecg[0] / jac;
-        zt_z[iptr] = vecg[1] / jac;
-      }
+      // zt_i
+      fdlib_math_cross_product(vec3, vec1, vecg);
+      zt_x[iptr] = vecg[0] / jac;
+      zt_z[iptr] = vecg[1] / jac;
+    }
   }
     
-  // extend to ghosts. may replaced by mpi exchange
-  // x1, mirror
-  for (size_t k = 0; k < nz; k++){
-      for (size_t i = 0; i < ni1; i++)
-      {
-        size_t iptr = i + k * siz_iz;
-        jac2d[iptr] = jac2d[iptr + (ni1-i)*2 -1 ];
-         xi_x[iptr] =  xi_x[iptr + (ni1-i)*2 -1 ];
-         xi_z[iptr] =  xi_z[iptr + (ni1-i)*2 -1 ];
-         zt_x[iptr] =  zt_x[iptr + (ni1-i)*2 -1 ];
-         zt_z[iptr] =  zt_z[iptr + (ni1-i)*2 -1 ];
-      }
-  }
-  // x2, mirror
-  for (size_t k = 0; k < nz; k++){
-      for (size_t i = ni2+1; i < nx; i++)
-      {
-        size_t iptr = i + k * siz_iz;
-        jac2d[iptr] = jac2d[iptr - (i-ni2)*2 +1 ];
-         xi_x[iptr] =  xi_x[iptr - (i-ni2)*2 +1 ];
-         xi_z[iptr] =  xi_z[iptr - (i-ni2)*2 +1 ];
-         zt_x[iptr] =  zt_x[iptr - (i-ni2)*2 +1 ];
-         zt_z[iptr] =  zt_z[iptr - (i-ni2)*2 +1 ];
-      }
-  }
-  // z1, mirror
-  for (size_t k = 0; k < nk1; k++) {
-      for (size_t i = 0; i < nx; i++) {
-        size_t iptr = i + k * siz_iz;
-        jac2d[iptr] = jac2d[iptr + ((nk1-k)*2 -1) * siz_iz ];
-         xi_x[iptr] =  xi_x[iptr + ((nk1-k)*2 -1) * siz_iz ];
-         xi_z[iptr] =  xi_z[iptr + ((nk1-k)*2 -1) * siz_iz ];
-         zt_x[iptr] =  zt_x[iptr + ((nk1-k)*2 -1) * siz_iz ];
-         zt_z[iptr] =  zt_z[iptr + ((nk1-k)*2 -1) * siz_iz ];
-      }
-  }
-  // z2, mirror
-  for (size_t k = nk2+1; k < nz; k++) {
-      for (size_t i = 0; i < nx; i++) {
-        size_t iptr = i + k * siz_iz;
-        jac2d[iptr] = jac2d[iptr - ((k-nk2)*2 -1) * siz_iz ];
-         xi_x[iptr] =  xi_x[iptr - ((k-nk2)*2 -1) * siz_iz ];
-         xi_z[iptr] =  xi_z[iptr - ((k-nk2)*2 -1) * siz_iz ];
-         zt_x[iptr] =  zt_x[iptr - ((k-nk2)*2 -1) * siz_iz ];
-         zt_z[iptr] =  zt_z[iptr - ((k-nk2)*2 -1) * siz_iz ];
-      }
-  }
+  //mirror_symmetry(gdcurv,metric->v3d,metric->ncmp);
+  geometric_symmetry(gdcurv,metric->v3d,metric->ncmp);
 
   return;
+}
+
+int mirror_symmetry(gd_t *gdcurv,float *v3d, int ncmp)
+{
+  int ni1 = gdcurv->ni1;
+  int ni2 = gdcurv->ni2;
+  int nk1 = gdcurv->nk1;
+  int nk2 = gdcurv->nk2;
+  int nx  = gdcurv->nx;
+  int nz  = gdcurv->nz;
+  size_t siz_iz  = gdcurv->siz_iz;
+  size_t siz_icmp  = gdcurv->siz_icmp;
+
+  size_t iptr, iptr1, iptr2; 
+  for(int icmp=0; icmp<ncmp; icmp++){
+    iptr = icmp * siz_icmp;
+    // x1, mirror
+    for (size_t k = 0; k < nz; k++){
+      for (size_t i = 0; i < ni1; i++)
+      {
+        iptr1 = iptr + i + k * siz_iz;
+        iptr2 = iptr + (2*ni1-i) + k * siz_iz;
+        v3d[iptr1] = v3d[iptr2];
+      }
+    }
+    // x2, mirror
+    for (size_t k = 0; k < nz; k++){
+      for (size_t i = ni2+1; i < nx; i++)
+      {
+        iptr1 = iptr + i + k * siz_iz;
+        iptr2 = iptr + (2*ni2-i) + k * siz_iz;
+        v3d[iptr1] = v3d[iptr2];
+      }
+    }
+    // z1, mirror
+    for (size_t k = 0; k < nk1; k++) {
+      for (size_t i = 0; i < nx; i++) {
+        iptr1 = iptr + i + k * siz_iz;
+        iptr2 = iptr + i + (2*nk1-k) * siz_iz;
+        v3d[iptr1] = v3d[iptr2];
+      }
+    }
+    // z2, mirror
+    for (size_t k = nk2+1; k < nz; k++) {
+      for (size_t i = 0; i < nx; i++) {
+        iptr1 = iptr + i + k * siz_iz;
+        iptr2 = iptr + i + (2*nk2-k) * siz_iz;
+        v3d[iptr1] = v3d[iptr2];
+      }
+    }
+  }
+
+  return 0;
+}
+
+int geometric_symmetry(gd_t *gdcurv,float *v3d, int ncmp)
+{
+  int ni1 = gdcurv->ni1;
+  int ni2 = gdcurv->ni2;
+  int nk1 = gdcurv->nk1;
+  int nk2 = gdcurv->nk2;
+  int nx  = gdcurv->nx;
+  int nz  = gdcurv->nz;
+  size_t siz_iz  = gdcurv->siz_iz;
+  size_t siz_icmp  = gdcurv->siz_icmp;
+
+  size_t iptr, iptr1, iptr2, iptr3; 
+  for(int icmp=0; icmp<ncmp; icmp++){
+    iptr = icmp * siz_icmp;
+    // x1 
+    for (size_t k = 0; k < nz; k++){
+      for (size_t i = 0; i < ni1; i++)
+      {
+        iptr1 = iptr + i + k * siz_iz;
+        iptr2 = iptr + ni1 + k * siz_iz;
+        iptr3 = iptr + (2*ni1-i) + k * siz_iz;
+        v3d[iptr1] = 2*v3d[iptr2] - v3d[iptr3];
+      }
+    }
+    // x2, mirror
+    for (size_t k = 0; k < nz; k++){
+      for (size_t i = ni2+1; i < nx; i++)
+      {
+        iptr1 = iptr + i + k * siz_iz;
+        iptr2 = iptr + ni2 + k * siz_iz;
+        iptr3 = iptr + (2*ni2-i) + k * siz_iz;
+        v3d[iptr1] = 2*v3d[iptr2] - v3d[iptr3];
+      }
+    }
+    // z1, mirror
+    for (size_t k = 0; k < nk1; k++) {
+      for (size_t i = 0; i < nx; i++) {
+        iptr1 = iptr + i + k * siz_iz;
+        iptr2 = iptr + i + nk1 * siz_iz;
+        iptr3 = iptr + i + (2*nk1-k) * siz_iz;
+        v3d[iptr1] = 2*v3d[iptr2] - v3d[iptr3];
+      }
+    }
+    // z2, mirror
+    for (size_t k = nk2+1; k < nz; k++) {
+      for (size_t i = 0; i < nx; i++) {
+        iptr1 = iptr + i + k * siz_iz;
+        iptr2 = iptr + i + nk2 * siz_iz;
+        iptr3 = iptr + i + (2*nk2-k) * siz_iz;
+        v3d[iptr1] = 2*v3d[iptr2] - v3d[iptr3];
+      }
+    }
+  }
+
+  return 0;
 }
 
 /*
@@ -521,50 +586,7 @@ gd_curv_coord_import(gd_t *gdcurv, char *import_dir)
     }
   }
 
-  // extend to ghosts
-  // x1 mirror
-  for (int k = nk1; k <= nk2; k++){
-    for (int i = 0; i < ni1; i++){
-     iptr = i + k * siz_iz;
-     iptr_b = ni1 + k * siz_iz;
-     iptr_c = (2*ni1-i) + k * siz_iz;
-     x2d[iptr] = 2.0*x2d[iptr_b] - x2d[iptr_c];
-     z2d[iptr] = 2.0*z2d[iptr_b] - z2d[iptr_c];
-    }
-  }
-  
-  // x2 mirror
-  for (int k = nk1; k <= nk2; k++){
-    for (int i = ni2+1; i < nx; i++){
-     iptr = i + k * siz_iz;
-     iptr_b = ni2 + k * siz_iz;
-     iptr_c = (2*ni2-i) + k * siz_iz;
-     x2d[iptr] = 2.0*x2d[iptr_b] - x2d[iptr_c];
-     z2d[iptr] = 2.0*z2d[iptr_b] - z2d[iptr_c];
-    }
-  }
-
-  // z1 mirror
-  for (int k = 0; k < nk1; k++){
-    for (int i = ni1; i <= ni2; i++){
-     iptr = i + k * siz_iz;
-     iptr_b = i + nk1 * siz_iz;
-     iptr_c = i + (2*nk1-k) * siz_iz;
-     x2d[iptr] = 2.0*x2d[iptr_b] - x2d[iptr_c];
-     z2d[iptr] = 2.0*z2d[iptr_b] - z2d[iptr_c];
-    }
-  }
-
-  // z2 mirror
-  for (int k = nk2+1; k < nz; k++){
-    for (int i = ni1; i <= ni2; i++){
-     iptr = i + k * siz_iz;
-     iptr_b = i + nk2 * siz_iz;
-     iptr_c = i + (2*nk2-k) * siz_iz;
-     x2d[iptr] = 2.0*x2d[iptr_b] - x2d[iptr_c];
-     z2d[iptr] = 2.0*z2d[iptr_b] - z2d[iptr_c];
-    }
-  }
+  geometric_symmetry(gdcurv,gdcurv->v3d,gdcurv->ncmp);
 
   free(coord_x);
   free(coord_z);
