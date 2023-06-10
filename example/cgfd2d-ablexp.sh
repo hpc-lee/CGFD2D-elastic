@@ -66,12 +66,6 @@ cat << ieof > $PAR_FILE
       "cartesian" : {
         "origin"  : [0.0, -29900.0 ],
         "inteval" : [ 100.0, 100.0 ]
-      },
-      "#layer_interp" : {
-        "in_grid_layer_file" : "$INPUTDIR/prep_grid/random_topo.gdlay",
-        "refine_factor" : [ 1, 1 ],
-        "horizontal_start_index" : [ 3],
-        "vertical_last_to_top" : 0
       }
   },
   "is_export_grid" : 1,

@@ -13,12 +13,14 @@ echo "EXEC_WAVE=$EXEC_WAVE"
 INPUTDIR=`pwd`
 
 #-- output and conf
-PROJDIR=`pwd`/../project
+PROJDIR=`pwd`/../project1
 PAR_FILE=${PROJDIR}/test.json
 GRID_DIR=${PROJDIR}/output
 MEDIA_DIR=${PROJDIR}/output
 SOURCE_DIR=${PROJDIR}/output
 OUTPUT_DIR=${PROJDIR}/output
+
+rm -rf ${PROJDIR}
 
 #-- create dir
 mkdir -p $PROJDIR
@@ -26,17 +28,19 @@ mkdir -p $OUTPUT_DIR
 mkdir -p $GRID_DIR
 mkdir -p $MEDIA_DIR
 
+NX=197
+NZ=201
 #----------------------------------------------------------------------
 #-- create main conf
 #----------------------------------------------------------------------
 cat << ieof > $PAR_FILE
 {
-  "number_of_total_grid_points_x" : 400,
-  "number_of_total_grid_points_z" : 300,
+  "number_of_total_grid_points_x" : ${NX},
+  "number_of_total_grid_points_z" : ${NZ},
 
-  "size_of_time_step" : 0.01,
-  "number_of_time_steps" : 600,
-  "#time_window_length" : 4,
+  "size_of_time_step" : 0.001,
+  "number_of_time_steps" : 10000,
+  "#time_window_length" : 2,
   "check_stability" : 1,
 
   "boundary_x_left" : {
@@ -68,16 +72,10 @@ cat << ieof > $PAR_FILE
       },
 
   "grid_generation_method" : {
-      "#import" : "$GRID_DIR",
-      "cartesian" : {
+      "import" : "$INPUTDIR/grid_model1",
+      "#cartesian" : {
          "origin"  : [0.0, -29900.0 ],
          "inteval" : [ 100.0, 100.0 ]
-      },
-      "#layer_interp" : {
-        "in_grid_layer_file" : "$INPUTDIR/prep_grid/random_topo_single.gdlay",
-        "refine_factor" : [ 1, 1 ],
-        "horizontal_start_index" : [ 3],
-        "vertical_last_to_top" : 0
       }
   },
   "is_export_grid" : 1,
@@ -129,7 +127,7 @@ cat << ieof > $PAR_FILE
 
   "in_station_file" : "$INPUTDIR/prep_station/station.list",
 
-  "receiver_line" : [
+  "#receiver_line" : [
     {
       "name" : "line_x_1",
       "grid_index_start"    : [  50, 59 ],
@@ -148,13 +146,13 @@ cat << ieof > $PAR_FILE
     {
       "name" : "volume_vel",
       "grid_index_start" : [ 0,   0 ],
-      "grid_index_count" : [ 400, 300 ],
+      "grid_index_count" : [ ${NX}, ${NZ} ],
       "grid_index_incre" : [  1,  1 ],
       "time_index_start" : 0,
       "time_index_incre" : 1,
       "save_velocity" : 1,
-      "save_stress"   : 1,
-      "save_strain"   : 1
+      "save_stress"   : 0,
+      "save_strain"   : 0
     }
   ],
 
@@ -177,7 +175,7 @@ set -e
 printf "\nUse $NUMPROCS CPUs on following nodes:\n"
 
 printf "\nStart simualtion ...\n";
-time $EXEC_WAVE $PAR_FILE 100 2>&1 |tee log
+time $EXEC_WAVE $PAR_FILE 100 2>&1 |tee log2
 if [ $? -ne 0 ]; then
     printf "\nSimulation fail! stop!\n"
     exit 1
