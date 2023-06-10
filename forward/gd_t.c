@@ -563,7 +563,7 @@ gd_curv_coord_import(gd_t *gdcurv, char *import_dir)
   // read in nc
   int ncid;
   int xid,zid;
-  int ierr, iptr, iptr1, iptr_b, iptr_c;
+  int ierr, iptr, iptr1;
  
   ierr = nc_open(in_file, NC_NOWRITE, &ncid);  handle_nc_err(ierr);
 
