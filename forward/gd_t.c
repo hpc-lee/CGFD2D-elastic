@@ -753,6 +753,10 @@ gd_curv_coord_to_local_indx(gd_t *gd,
        sz < gd->zmin || sz > gd->zmax)
   {
     is_here = 0;
+    *si = -1000;
+    *sk = -1000;
+    *sx_inc = 0.0;
+    *sz_inc = 0.0;
     return is_here;
   }
 
@@ -789,6 +793,10 @@ gd_curv_coord_to_local_indx(gd_t *gd,
       min_dist_k < nk1 || min_dist_k > nk2 )
   {
     is_here = 0;
+    *si = -1000;
+    *sk = -1000;
+    *sx_inc = 0.0;
+    *sz_inc = 0.0;
     return is_here;
   }
 
@@ -880,7 +888,7 @@ gd_curv_depth_to_axis(gd_t *gd,
     iptr = i + nk2 * siz_iz;
     xmin = gd->x2d[iptr];
     xmax = gd->x2d[iptr+1];
-    if(sx>=xmin  && sx <xmax )
+    if(sx>=xmin && sx <xmax )
     {
       for (int n1=0; n1<2; n1++) 
       {
