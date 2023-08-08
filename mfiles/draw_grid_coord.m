@@ -5,13 +5,13 @@ addmypath
 
 % -------------------------- parameters input -------------------------- %
 % file and path name
-parfnm='../project1/test.json';
-output_dir='../project1/output';
+parfnm='../project2/test.json';
+output_dir='../project2/output';
 
 % which grid profile to plot
-subs=[5,5];     % start from index '1'
+subs=[1,100];     % start from index '1'
 subc=[-1,-1];   % '-1' to plot all points in this dimension
-subt=[2,2];
+subt=[1,2];
 
 % figure control parameters
 flag_km     = 1;

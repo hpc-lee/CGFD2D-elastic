@@ -1,25 +1,25 @@
 clear all;
-close all;
+% close all;
 clc;
 addmypath
 % -------------------------- parameters input -------------------------- %
 % file and path name
-parfnm='../project/test.json'
-output_dir='../project/output'
+parfnm='../project3/test.json'
+output_dir='../project3/output'
 
 % which snapshot to plot
 id=1;
 
 % variable and time to plot
-varnm='Txx';
-ns=600;
-ne=600;
-nt=50;
+varnm='Vz';
+ns=3000;
+ne=3000;
+nt=100;
 
 % which grid profile to plot
-subs=[1,1];     % start from index '1'
+subs=[1,100];     % start from index '1'
 subc=[-1,-1];   % '-1' to plot all points in this dimension
-subt=[1,1];
+subt=[1,2];
 
 % figure control parameters
 flag_km     = 1;
@@ -27,7 +27,7 @@ flag_emlast = 1;
 flag_print  = 0;
 savegif = 0;
 
-% scl_caxis=[-10.0 10.0];
+% scl_caxis=[-1000.0 1000.0];
 filename1 = ['Vz2.gif'];
 scl_daspect =[1 1 1];
 clrmp       = 'jetwr';
@@ -49,13 +49,13 @@ subt1(1) = snap_subt(1) * subt(1); %stride
 subt1(2) = snap_subt(2) * subt(2);
 
 if(subc(1) == -1)
-  subc1(1) = floor(snap_subc(1)/subt(1))-subs(1)+1;
+  subc1(1) = ceil((snap_subc(1)-subs(1)+1)/subt(1));
 else
   subc1(1) = subc(1);
 end
 
 if(subc(2) == -1)
-  subc1(2) = floor(snap_subc(2)/subt(2))-subs(2)+1;
+  subc1(2) = ceil((snap_subc(2)-subs(2)+1)/subt(2));
 else
   subc1(2) = subc(2);
 end
