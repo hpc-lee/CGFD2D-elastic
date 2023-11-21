@@ -1,38 +1,27 @@
 clear all;
-% close all;
+close all;
 clc;
 addmypath
 % -------------------------- parameters input -------------------------- %
 % file and path name
-parfnm='../project3/test.json'
-output_dir='../project3/output'
+parfnm='../project1/test.json'
+output_dir='../project1/output'
+
+% which grid profile to plot
+subs=[1,1];     % start from index '1'
+subc=[-1,-1];   % '-1' to plot all points in this dimension
+subt=[1,1];
 
 % which snapshot to plot
 id=1;
 
 % variable and time to plot
-varnm='Vz';
-ns=3000;
-ne=3000;
+varnm='Vx';
+ns=100;
+ne=2400;
 nt=100;
 
-% which grid profile to plot
-subs=[1,100];     % start from index '1'
-subc=[-1,-1];   % '-1' to plot all points in this dimension
-subt=[1,2];
-
-% figure control parameters
-flag_km     = 1;
-flag_emlast = 1;
-flag_print  = 0;
-savegif = 0;
-
-% scl_caxis=[-1000.0 1000.0];
-filename1 = ['Vz2.gif'];
-scl_daspect =[1 1 1];
-clrmp       = 'jetwr';
-taut=0.5;
-
+% scl_caxis=[-50.0 50.0];
 % read parameters file
 par=loadjson(parfnm);
 snap_subs=par.snapshot{1}.grid_index_start;
@@ -59,11 +48,23 @@ if(subc(2) == -1)
 else
   subc1(2) = subc(2);
 end
+
+% figure control parameters
+flag_km     = 1;
+flag_emlast = 1;
+flag_print  = 0;
+savegif = 0;
+
+
+filename1 = ['Vz2.gif'];
+scl_daspect =[1 1 1];
+clrmp       = 'jetwr';
+taut=0.5;
 %-----------------------------------------------------------
 %-- load coord
 %-----------------------------------------------------------
 
-[x,z]=gather_coord(parfnm,output_dir,subs1,subc1,subt1);
+[x,z]=gather_coord(output_dir,subs1,subc1,subt1);
 
 % coordinate unit
 str_unit='m';
