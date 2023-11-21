@@ -9,7 +9,6 @@
  *************************************************/
 
 typedef struct {
-  int n1, n2, n3, n4;
   int nx, nz, ncmp;
   float *v3d; // allocated var
 
@@ -64,12 +63,10 @@ int
 md_init(gd_t *gd, md_t *md, int media_type, int visco_type, int nmaxwell);
 
 int
-md_import(md_t *md, char *in_dir);
+md_import(gd_t *gd, md_t *md, char *in_dir);
 
 int
-md_export(gd_t *gd,
-          md_t *md,
-          char *output_dir);
+md_export(gd_t *gd, md_t *md, char *output_dir);
 
 int
 md_gen_test_ac_iso(md_t *md);
