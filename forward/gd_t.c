@@ -457,7 +457,7 @@ gd_curv_coord_export(gd_t *gdcurv,
   }
   // construct file name
   char ou_file[CONST_MAX_STRLEN];
-  sprintf(ou_file, "%s/coord.nc", output_dir);
+  sprintf(ou_file, "%s/coord_px0_pz0.nc", output_dir);
   
   int ncid;
   int xid,zid;
@@ -508,7 +508,7 @@ gd_curv_coord_import(gd_t *gdcurv, char *import_dir)
 {
   // construct file name
   char in_file[CONST_MAX_STRLEN];
-  sprintf(in_file, "%s/coord.nc", import_dir);
+  sprintf(in_file, "%s/coord_px0_pz0.nc", import_dir);
   
   int ni = gdcurv->ni;
   int nk = gdcurv->nk;
@@ -594,7 +594,7 @@ gd_cart_coord_export(gd_t *gdcart,
 
   // construct file name
   char ou_file[CONST_MAX_STRLEN];
-  sprintf(ou_file, "%s/coord.nc", output_dir);
+  sprintf(ou_file, "%s/coord_px0_pz0.nc", output_dir);
   
   // read in nc
   int ncid;
@@ -664,7 +664,7 @@ gd_curv_metric_export(gd_t        *gd,
 
   // construct file name
   char ou_file[CONST_MAX_STRLEN];
-  sprintf(ou_file, "%s/metric.nc", output_dir);
+  sprintf(ou_file, "%s/metric_px0_pz0.nc", output_dir);
   
   // read in nc
   int ncid;
@@ -724,7 +724,7 @@ gd_curv_metric_import(gd_t *gd, gdcurv_metric_t *metric, char *import_dir)
 {
   // construct file name
   char in_file[CONST_MAX_STRLEN];
-  sprintf(in_file, "%s/metric.nc", import_dir);
+  sprintf(in_file, "%s/metric_px0_pz0.nc", import_dir);
 
   int ni1 = gd->ni1;
   int nk1 = gd->nk1;
