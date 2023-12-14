@@ -23,7 +23,7 @@ sv_curv_col_el_rhs_timg_z2(
                     float *restrict hVx , float *restrict hVz ,
                     float *restrict xi_x, float *restrict xi_z,
                     float *restrict zt_x, float *restrict zt_z,
-                    float *restrict jac3d, float *restrict slw3d,
+                    float *restrict jac2d, float *restrict slw2d,
                     int ni1, int ni2, int nk1, int nk2,
                     size_t siz_iz, 
                     int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
@@ -84,7 +84,7 @@ sv_curv_col_el_rhs_timg_z2(
           ztz = zt_z[iptr];
 
           // slowness and jac
-          slwjac = slw3d[iptr] / jac3d[iptr];
+          slwjac = slw2d[iptr] / jac2d[iptr];
 
           //
           // for hVx
@@ -93,14 +93,14 @@ sv_curv_col_el_rhs_timg_z2(
           // transform to conservative vars
           for (n=0; n<fdx_len; n++) {
             iptr4vec = iptr + fdx_indx[n];
-            vecxi[n] = jac3d[iptr4vec] * (  xi_x[iptr4vec] * Txx[iptr4vec]
+            vecxi[n] = jac2d[iptr4vec] * (  xi_x[iptr4vec] * Txx[iptr4vec]
                                           + xi_z[iptr4vec] * Txz[iptr4vec] );
           }
 
           // blow surface -> cal
           for (n=0; n<n_free; n++) {
             iptr4vec = iptr + fdz_indx[n] * siz_iz;
-            veczt[n] = jac3d[iptr4vec] * (  zt_x[iptr4vec] * Txx[iptr4vec]
+            veczt[n] = jac2d[iptr4vec] * (  zt_x[iptr4vec] * Txx[iptr4vec]
                                           + zt_z[iptr4vec] * Txz[iptr4vec] );
           }
 
@@ -113,7 +113,7 @@ sv_curv_col_el_rhs_timg_z2(
             int n_img = fdz_indx[n] - 2*(n-n_free);
             //int n_img = n_free-(n-n_free);
             iptr4vec = iptr + n_img * siz_iz;
-            veczt[n] = -jac3d[iptr4vec] * (  zt_x[iptr4vec] * Txx[iptr4vec]
+            veczt[n] = -jac2d[iptr4vec] * (  zt_x[iptr4vec] * Txx[iptr4vec]
                                            + zt_z[iptr4vec] * Txz[iptr4vec] );
             //veczt[n] = -veczt[n_free-(n-n_free)];
           }
@@ -131,14 +131,14 @@ sv_curv_col_el_rhs_timg_z2(
           // transform to conservative vars
           for (n=0; n<fdx_len; n++) {
             iptr4vec = iptr + fdx_indx[n];
-            vecxi[n] = jac3d[iptr4vec] * (  xi_x[iptr4vec] * Txz[iptr4vec]
+            vecxi[n] = jac2d[iptr4vec] * (  xi_x[iptr4vec] * Txz[iptr4vec]
                                           + xi_z[iptr4vec] * Tzz[iptr4vec] );
           }
 
           // blow surface -> cal
           for (n=0; n<n_free; n++) {
             iptr4vec = iptr + fdz_indx[n] * siz_iz;
-            veczt[n] = jac3d[iptr4vec] * (  zt_x[iptr4vec] * Txz[iptr4vec]
+            veczt[n] = jac2d[iptr4vec] * (  zt_x[iptr4vec] * Txz[iptr4vec]
                                           + zt_z[iptr4vec] * Tzz[iptr4vec] );
           }
 
@@ -149,7 +149,7 @@ sv_curv_col_el_rhs_timg_z2(
           for (n=n_free+1; n<fdz_len; n++) {
             int n_img = fdz_indx[n] - 2*(n-n_free);
             iptr4vec = iptr + n_img * siz_iz;
-            veczt[n] = -jac3d[iptr4vec] * (  zt_x[iptr4vec] * Txz[iptr4vec]
+            veczt[n] = -jac2d[iptr4vec] * (  zt_x[iptr4vec] * Txz[iptr4vec]
                                            + zt_z[iptr4vec] * Tzz[iptr4vec] );
           }
 
@@ -176,7 +176,7 @@ sv_curv_col_el_rhs_src(
             float *restrict hVx , float *restrict hVz ,
             float *restrict hTxx, float *restrict hTzz,
             float *restrict hTxz, 
-            float *restrict jac3d, float *restrict slw3d,
+            float *restrict jac2d, float *restrict slw2d,
             src_t *src, // short nation for reference member
             const int verbose)
 {
@@ -227,13 +227,13 @@ sv_curv_col_el_rhs_src(
         //fprintf(stdout,"-----> src_iptr=%d,src_ceof=%g\n",iptr,coef);
 
         if (src->force_actived == 1) {
-          float V = coef * slw3d[iptr] / jac3d[iptr];
+          float V = coef * slw2d[iptr] / jac2d[iptr];
           hVx[iptr] += fx * V;
           hVz[iptr] += fz * V;
         }
 
         if (src->moment_actived == 1) {
-          float rjac = coef / jac3d[iptr];
+          float rjac = coef / jac2d[iptr];
           hTxx[iptr] -= Mxx * rjac;
           hTzz[iptr] -= Mzz * rjac;
           hTxz[iptr] -= Mxz * rjac;

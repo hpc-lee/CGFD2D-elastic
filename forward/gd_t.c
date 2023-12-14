@@ -20,58 +20,58 @@
 #define M_gd_INDEX( i, k, ni ) ( ( i ) + ( k ) * ( ni ) )
 
 int 
-gd_curv_init(gd_t *gdcurv)
+gd_curv_init(gd_t *gd)
 {
   /*
    * 0-2: x2d, z2d
    */
 
-  gdcurv->type = GD_TYPE_CURV;
+  gd->type = GD_TYPE_CURV;
 
-  gdcurv->ncmp = CONST_NDIM;
+  gd->ncmp = CONST_NDIM;
 
-  gdcurv->siz_iz   = gdcurv->nx;
-  gdcurv->siz_icmp = gdcurv->nx * gdcurv->nz;
+  gd->siz_iz   = gd->nx;
+  gd->siz_icmp = gd->nx * gd->nz;
   
   // vars
-  gdcurv->v3d = (float *) fdlib_mem_calloc_1d_float(
-                  gdcurv->siz_icmp * gdcurv->ncmp, 0.0, "gd_curv_init");
-  if (gdcurv->v3d == NULL) {
+  gd->v3d = (float *) fdlib_mem_calloc_1d_float(
+                  gd->siz_icmp * gd->ncmp, 0.0, "gd_curv_init");
+  if (gd->v3d == NULL) {
       fprintf(stderr,"Error: failed to alloc coord vars\n");
       fflush(stderr);
   }
   
   // position of each v3d
-  size_t *cmp_pos = (size_t *) fdlib_mem_calloc_1d_sizet(gdcurv->ncmp,
+  size_t *cmp_pos = (size_t *) fdlib_mem_calloc_1d_sizet(gd->ncmp,
                                                          0,
                                                          "gd_curv_init");
   
   // name of each v3d
-  char **cmp_name = (char **) fdlib_mem_malloc_2l_char(gdcurv->ncmp,
+  char **cmp_name = (char **) fdlib_mem_malloc_2l_char(gd->ncmp,
                                                        CONST_MAX_STRLEN,
                                                        "gd_curv_init");
   
   // set value
   int icmp = 0;
-  cmp_pos[icmp] = icmp * gdcurv->siz_icmp;
+  cmp_pos[icmp] = icmp * gd->siz_icmp;
   sprintf(cmp_name[icmp],"%s","x");
-  gdcurv->x2d = gdcurv->v3d + cmp_pos[icmp];
+  gd->x2d = gd->v3d + cmp_pos[icmp];
 
   icmp += 1;
-  cmp_pos[icmp] = icmp * gdcurv->siz_icmp;
+  cmp_pos[icmp] = icmp * gd->siz_icmp;
   sprintf(cmp_name[icmp],"%s","z");
-  gdcurv->z2d = gdcurv->v3d + cmp_pos[icmp];
+  gd->z2d = gd->v3d + cmp_pos[icmp];
   
   // set pointer
-  gdcurv->cmp_pos  = cmp_pos;
-  gdcurv->cmp_name = cmp_name;
+  gd->cmp_pos  = cmp_pos;
+  gd->cmp_name = cmp_name;
 
   return 0;
 }
 
 int 
-gd_curv_metric_init(gd_t        *gdcurv,
-                    gdcurv_metric_t *metric)
+gd_curv_metric_init(gd_t        *gd,
+                    gd_metric_t *metric)
 {
   const int num_grid_vars = 5; 
   /*
@@ -80,8 +80,8 @@ gd_curv_metric_init(gd_t        *gdcurv,
    * 3-4: zeta_x, zeta_z
    */
 
-  metric->nx   = gdcurv->nx;
-  metric->nz   = gdcurv->nz;
+  metric->nx   = gd->nx;
+  metric->nz   = gd->nz;
   metric->ncmp = num_grid_vars;
 
   metric->siz_iz   = metric->nx;
@@ -142,21 +142,21 @@ gd_curv_metric_init(gd_t        *gdcurv,
 // need to change to use fdlib_math.c
 //
 int
-gd_curv_metric_cal(gd_t        *gdcurv,
-                   gdcurv_metric_t *metric,
+gd_curv_metric_cal(gd_t        *gd,
+                   gd_metric_t *metric,
                    int fd_len, int *restrict fd_indx, float *restrict fd_coef)
 {
-  int ni1 = gdcurv->ni1;
-  int ni2 = gdcurv->ni2;
-  int nk1 = gdcurv->nk1;
-  int nk2 = gdcurv->nk2;
-  int nx  = gdcurv->nx;
-  int nz  = gdcurv->nz;
-  size_t siz_iz  = gdcurv->siz_iz;
+  int ni1 = gd->ni1;
+  int ni2 = gd->ni2;
+  int nk1 = gd->nk1;
+  int nk2 = gd->nk2;
+  int nx  = gd->nx;
+  int nz  = gd->nz;
+  size_t siz_iz  = gd->siz_iz;
 
   // point to each var
-  float *restrict x2d  = gdcurv->x2d;
-  float *restrict z2d  = gdcurv->z2d;
+  float *restrict x2d  = gd->x2d;
+  float *restrict z2d  = gd->z2d;
   float *restrict jac2d= metric->jac;
   float *restrict xi_x = metric->xi_x;
   float *restrict xi_z = metric->xi_z;
@@ -216,23 +216,23 @@ gd_curv_metric_cal(gd_t        *gdcurv,
     }
   }
     
-  //mirror_symmetry(gdcurv,metric->v3d,metric->ncmp);
-  geometric_symmetry(gdcurv,metric->v3d,metric->ncmp);
+  //mirror_symmetry(gd,metric->v3d,metric->ncmp);
+  geometric_symmetry(gd,metric->v3d,metric->ncmp);
 
   return 0;
 }
 
 int
-mirror_symmetry(gd_t *gdcurv,float *v3d, int ncmp)
+mirror_symmetry(gd_t *gd,float *v3d, int ncmp)
 {
-  int ni1 = gdcurv->ni1;
-  int ni2 = gdcurv->ni2;
-  int nk1 = gdcurv->nk1;
-  int nk2 = gdcurv->nk2;
-  int nx  = gdcurv->nx;
-  int nz  = gdcurv->nz;
-  size_t siz_iz  = gdcurv->siz_iz;
-  size_t siz_icmp  = gdcurv->siz_icmp;
+  int ni1 = gd->ni1;
+  int ni2 = gd->ni2;
+  int nk1 = gd->nk1;
+  int nk2 = gd->nk2;
+  int nx  = gd->nx;
+  int nz  = gd->nz;
+  size_t siz_iz  = gd->siz_iz;
+  size_t siz_icmp  = gd->siz_icmp;
 
   size_t iptr, iptr1, iptr2; 
   for(int icmp=0; icmp<ncmp; icmp++){
@@ -277,16 +277,16 @@ mirror_symmetry(gd_t *gdcurv,float *v3d, int ncmp)
 }
 
 int 
-geometric_symmetry(gd_t *gdcurv,float *v3d, int ncmp)
+geometric_symmetry(gd_t *gd,float *v3d, int ncmp)
 {
-  int ni1 = gdcurv->ni1;
-  int ni2 = gdcurv->ni2;
-  int nk1 = gdcurv->nk1;
-  int nk2 = gdcurv->nk2;
-  int nx  = gdcurv->nx;
-  int nz  = gdcurv->nz;
-  size_t siz_iz  = gdcurv->siz_iz;
-  size_t siz_icmp  = gdcurv->siz_icmp;
+  int ni1 = gd->ni1;
+  int ni2 = gd->ni2;
+  int nk1 = gd->nk1;
+  int nk2 = gd->nk2;
+  int nx  = gd->nx;
+  int nz  = gd->nz;
+  size_t siz_iz  = gd->siz_iz;
+  size_t siz_icmp  = gd->siz_icmp;
 
   size_t iptr, iptr1, iptr2, iptr3; 
   for(int icmp=0; icmp<ncmp; icmp++){
@@ -338,20 +338,20 @@ geometric_symmetry(gd_t *gdcurv,float *v3d, int ncmp)
  * generate cartesian grid for curv struct
  */
 int
-gd_curv_gen_cart(gd_t *gdcurv,
+gd_curv_gen_cart(gd_t *gd,
                  float dx, float x0_glob,
                  float dz, float z0_glob)
 {
-  float *x2d = gdcurv->x2d;
-  float *z2d = gdcurv->z2d;
+  float *x2d = gd->x2d;
+  float *z2d = gd->z2d;
 
-  float x0 = x0_glob + (0 - gdcurv->fdx_nghosts) * dx;
-  float z0 = z0_glob + (0 - gdcurv->fdz_nghosts) * dz;
+  float x0 = x0_glob + (0 - gd->fdx_nghosts) * dx;
+  float z0 = z0_glob + (0 - gd->fdz_nghosts) * dz;
 
   size_t iptr = 0;
-  for (size_t k=0; k<gdcurv->nz; k++)
+  for (size_t k=0; k<gd->nz; k++)
   {
-      for (size_t i=0; i<gdcurv->nx; i++)
+      for (size_t i=0; i<gd->nx; i++)
       {
         x2d[iptr] = x0 + i * dx;
         z2d[iptr] = z0 + k * dz;
@@ -368,7 +368,7 @@ gd_curv_gen_cart(gd_t *gdcurv,
  */
 
 int  
-gd_cart_init_set(gd_t *gdcart,
+gd_cart_init_set(gd_t *gd,
                  float dx, float x0_glob,
                  float dz, float z0_glob)
 {
@@ -376,50 +376,50 @@ gd_cart_init_set(gd_t *gdcart,
    * 0-2: x2d, z2d
    */
 
-  gdcart->type = GD_TYPE_CART;
+  gd->type = GD_TYPE_CART;
 
-  gdcart->nx   = gdcart->nx;
-  gdcart->nz   = gdcart->nz;
-  gdcart->ncmp = CONST_NDIM;
+  gd->nx   = gd->nx;
+  gd->nz   = gd->nz;
+  gd->ncmp = CONST_NDIM;
 
-  gdcart->siz_iz   = gdcart->nx;
-  gdcart->siz_icmp = gdcart->nx * gdcart->nz;
+  gd->siz_iz   = gd->nx;
+  gd->siz_icmp = gd->nx * gd->nz;
   
   // vars
   float *x1d = (float *) fdlib_mem_calloc_1d_float(
-                  gdcart->nx, 0.0, "gd_cart_init");
+                  gd->nx, 0.0, "gd_cart_init");
   float *z1d = (float *) fdlib_mem_calloc_1d_float(
-                  gdcart->nz, 0.0, "gd_cart_init");
+                  gd->nz, 0.0, "gd_cart_init");
   if (z1d == NULL) {
       fprintf(stderr,"Error: failed to alloc coord vars\n");
       fflush(stderr);
   }
 
-  float x0 = x0_glob + (0 - gdcart->fdx_nghosts) * dx;
-  float z0 = z0_glob + (0 - gdcart->fdz_nghosts) * dz;
+  float x0 = x0_glob + (0 - gd->fdx_nghosts) * dx;
+  float z0 = z0_glob + (0 - gd->fdz_nghosts) * dz;
 
-  for (size_t k=0; k< gdcart->nz; k++)
+  for (size_t k=0; k< gd->nz; k++)
   {
         z1d[k] = z0 + k * dz;
   }
-  for (size_t i=0; i< gdcart->nx; i++)
+  for (size_t i=0; i< gd->nx; i++)
   {
         x1d[i] = x0 + i * dx;
   }
 
-  gdcart->dx = dx;
-  gdcart->dz = dz;
+  gd->dx = dx;
+  gd->dz = dz;
 
-  gdcart->xmin = x0;
-  gdcart->zmin = z0;
-  gdcart->xmax = x0 + (gdcart->nx-1) * dx;
-  gdcart->zmax = z0 + (gdcart->nz-1) * dz;
+  gd->xmin = x0;
+  gd->zmin = z0;
+  gd->xmax = x0 + (gd->nx-1) * dx;
+  gd->zmax = z0 + (gd->nz-1) * dz;
 
-  gdcart->x0_glob = x0_glob;
-  gdcart->z0_glob = z0_glob;
+  gd->x0_glob = x0_glob;
+  gd->z0_glob = z0_glob;
 
-  gdcart->x1d = x1d;
-  gdcart->z1d = z1d;
+  gd->x1d = x1d;
+  gd->z1d = z1d;
   
   return 0;
 }
@@ -429,21 +429,21 @@ gd_cart_init_set(gd_t *gdcart,
 //
 
 int
-gd_curv_coord_export(gd_t *gdcurv,
+gd_curv_coord_export(gd_t *gd,
                      char *output_dir)
 {
-  int nx = gdcurv->nx;
-  int nz = gdcurv->nz;
-  int ni  = gdcurv->ni;
-  int nk  = gdcurv->nk;
-  int ni1 = gdcurv->ni1;
-  int nk1 = gdcurv->nk1;
-  int ni2 = gdcurv->ni2;
-  int nk2 = gdcurv->nk2;
+  int nx = gd->nx;
+  int nz = gd->nz;
+  int ni  = gd->ni;
+  int nk  = gd->nk;
+  int ni1 = gd->ni1;
+  int nk1 = gd->nk1;
+  int ni2 = gd->ni2;
+  int nk2 = gd->nk2;
   size_t iptr, iptr1;
-  size_t siz_iz = gdcurv->siz_iz;
-  float *x2d = gdcurv->x2d;
-  float *z2d = gdcurv->z2d;
+  size_t siz_iz = gd->siz_iz;
+  float *x2d = gd->x2d;
+  float *z2d = gd->z2d;
   float *coord_x = (float *) malloc(sizeof(float)*ni*nk);  
   float *coord_z = (float *) malloc(sizeof(float)*ni*nk);  
 
@@ -504,23 +504,23 @@ gd_curv_coord_export(gd_t *gdcurv,
 }
 
 int
-gd_curv_coord_import(gd_t *gdcurv, char *import_dir)
+gd_curv_coord_import(gd_t *gd, char *import_dir)
 {
   // construct file name
   char in_file[CONST_MAX_STRLEN];
   sprintf(in_file, "%s/coord_px0_pz0.nc", import_dir);
   
-  int ni = gdcurv->ni;
-  int nk = gdcurv->nk;
-  int nx = gdcurv->nx;
-  int nz = gdcurv->nz;
-  int ni1 = gdcurv->ni1;
-  int nk1 = gdcurv->nk1;
-  int ni2 = gdcurv->ni2;
-  int nk2 = gdcurv->nk2;
-  size_t siz_iz = gdcurv->siz_iz;
-  float *x2d = gdcurv->x2d;
-  float *z2d = gdcurv->z2d;
+  int ni = gd->ni;
+  int nk = gd->nk;
+  int nx = gd->nx;
+  int nz = gd->nz;
+  int ni1 = gd->ni1;
+  int nk1 = gd->nk1;
+  int ni2 = gd->ni2;
+  int nk2 = gd->nk2;
+  size_t siz_iz = gd->siz_iz;
+  float *x2d = gd->x2d;
+  float *z2d = gd->z2d;
   
   float *coord_x = (float *) malloc(sizeof(float)*ni*nk);  
   float *coord_z = (float *) malloc(sizeof(float)*ni*nk);  
@@ -553,7 +553,7 @@ gd_curv_coord_import(gd_t *gdcurv, char *import_dir)
     }
   }
   
-  geometric_symmetry(gdcurv,gdcurv->v3d,gdcurv->ncmp);
+  geometric_symmetry(gd,gd->v3d,gd->ncmp);
   
   free(coord_x);
   free(coord_z);
@@ -562,19 +562,19 @@ gd_curv_coord_import(gd_t *gdcurv, char *import_dir)
 }
 
 int
-gd_cart_coord_export(gd_t *gdcart,
+gd_cart_coord_export(gd_t *gd,
                      char *output_dir)
 {
-  int  nx = gdcart->nx;
-  int  nz = gdcart->nz;
-  int  ni1 = gdcart->ni1;
-  int  nk1 = gdcart->nk1;
-  int  ni2 = gdcart->ni2;
-  int  nk2 = gdcart->nk2;
-  int  ni  = gdcart->ni;
-  int  nk  = gdcart->nk;
-  float *x1d = gdcart->x1d;
-  float *z1d = gdcart->z1d;
+  int  nx = gd->nx;
+  int  nz = gd->nz;
+  int  ni1 = gd->ni1;
+  int  nk1 = gd->nk1;
+  int  ni2 = gd->ni2;
+  int  nk2 = gd->nk2;
+  int  ni  = gd->ni;
+  int  nk  = gd->nk;
+  float *x1d = gd->x1d;
+  float *z1d = gd->z1d;
   float *coord_x = (float *) malloc(sizeof(float)*nk);  
   float *coord_z = (float *) malloc(sizeof(float)*ni);  
   int iptr, iptr1;
@@ -643,7 +643,7 @@ gd_cart_coord_export(gd_t *gdcart,
 
 int
 gd_curv_metric_export(gd_t        *gd,
-                      gdcurv_metric_t *metric,
+                      gd_metric_t *metric,
                       char *output_dir)
 {
   int  number_of_vars = metric->ncmp;
@@ -720,7 +720,7 @@ gd_curv_metric_export(gd_t        *gd,
 }
 
 int
-gd_curv_metric_import(gd_t *gd, gdcurv_metric_t *metric, char *import_dir)
+gd_curv_metric_import(gd_t *gd, gd_metric_t *metric, char *import_dir)
 {
   // construct file name
   char in_file[CONST_MAX_STRLEN];
@@ -778,22 +778,22 @@ gd_curv_metric_import(gd_t *gd, gdcurv_metric_t *metric, char *import_dir)
 
 
 int
-gd_curv_set_minmax(gd_t *gdcurv)
+gd_curv_set_minmax(gd_t *gd)
 {
-  float xmin = gdcurv->x2d[0], xmax = gdcurv->x2d[0];
-  float zmin = gdcurv->z2d[0], zmax = gdcurv->z2d[0];
+  float xmin = gd->x2d[0], xmax = gd->x2d[0];
+  float zmin = gd->z2d[0], zmax = gd->z2d[0];
   
-  for (size_t i = 0; i < gdcurv->siz_icmp; i++){
-      xmin = xmin < gdcurv->x2d[i] ? xmin : gdcurv->x2d[i];
-      xmax = xmax > gdcurv->x2d[i] ? xmax : gdcurv->x2d[i];
-      zmin = zmin < gdcurv->z2d[i] ? zmin : gdcurv->z2d[i];
-      zmax = zmax > gdcurv->z2d[i] ? zmax : gdcurv->z2d[i];
+  for (size_t i = 0; i < gd->siz_icmp; i++){
+      xmin = xmin < gd->x2d[i] ? xmin : gd->x2d[i];
+      xmax = xmax > gd->x2d[i] ? xmax : gd->x2d[i];
+      zmin = zmin < gd->z2d[i] ? zmin : gd->z2d[i];
+      zmax = zmax > gd->z2d[i] ? zmax : gd->z2d[i];
   }
 
-  gdcurv->xmin = xmin;
-  gdcurv->xmax = xmax;
-  gdcurv->zmin = zmin;
-  gdcurv->zmax = zmax;
+  gd->xmin = xmin;
+  gd->xmax = xmax;
+  gd->zmin = zmin;
+  gd->zmax = zmax;
 
   return 0;
 }
@@ -803,7 +803,7 @@ gd_curv_set_minmax(gd_t *gdcurv)
  */
 
 int
-gd_cart_coord_to_local_indx(gd_t *gdcart,
+gd_cart_coord_to_local_indx(gd_t *gd,
                             float sx,
                             float sz,
                             int   *ou_si, int *ou_sk,
@@ -811,13 +811,13 @@ gd_cart_coord_to_local_indx(gd_t *gdcart,
 {
   int ierr = 0;
 
-  int si_glob = (int)( (sx - gdcart->x0_glob) / gdcart->dx + 0.5 );
-  int sk_glob = (int)( (sz - gdcart->z0_glob) / gdcart->dz + 0.5 );
-  float sx_inc = si_glob * gdcart->dx + gdcart->x0_glob - sx;
-  float sz_inc = sk_glob * gdcart->dz + gdcart->z0_glob - sz;
+  int si_glob = (int)( (sx - gd->x0_glob) / gd->dx + 0.5 );
+  int sk_glob = (int)( (sz - gd->z0_glob) / gd->dz + 0.5 );
+  float sx_inc = si_glob * gd->dx + gd->x0_glob - sx;
+  float sz_inc = sk_glob * gd->dz + gd->z0_glob - sz;
 
-  *ou_si = si_glob + gdcart->fdx_nghosts;
-  *ou_sk = sk_glob + gdcart->fdz_nghosts;
+  *ou_si = si_glob + gd->fdx_nghosts;
+  *ou_sk = sk_glob + gd->fdz_nghosts;
   *ou_sx_inc = sx_inc;
   *ou_sz_inc = sz_inc;
 

@@ -84,10 +84,10 @@ int
 md_gen_test_Qs(md_t *md, float Qs_freq);
 
 int
-md_gen_test_GMB(md_t *md);
+md_gen_test_vis_iso(md_t *md);
 
 int
-md_rho_to_slow(float *restrict rho, size_t siz_volume);
+md_rho_to_slow(float *restrict rho, size_t siz_icmp);
 
 int 
 md_vis_GMB_cal_Y(md_t *md, float freq, float fmin, float fmax);

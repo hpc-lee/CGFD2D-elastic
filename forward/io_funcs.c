@@ -12,11 +12,6 @@
 #include "fd_t.h"
 #include "io_funcs.h"
 
-//#define M_NCERR(ierr) {fprintf(stderr,"sv_ nc error: %s\n", nc_strerror(ierr)); exit(1);}
-#ifndef M_NCERR
-#define M_NCERR {fprintf(stderr,"io nc error\n"); exit(1);}
-#endif
-
 /*
  * read in station list file and locate station
  */
@@ -791,8 +786,8 @@ io_snap_nc_put_ac(iosnap_t *iosnap,
 }
 
 int
-io_snap_stress_to_strain_eliso(float *lam3d,
-                               float *mu3d,
+io_snap_stress_to_strain_eliso(float *lam2d,
+                               float *mu2d,
                                float *Txx,
                                float *Tzz,
                                float *Txz,
@@ -821,8 +816,8 @@ io_snap_stress_to_strain_eliso(float *lam3d,
       iptr = i + iptr_k;
       iptr_snap = n1 + n3 * counti;
 
-      lam = lam3d[iptr];
-      mu  =  mu3d[iptr];
+      lam = lam2d[iptr];
+      mu  =  mu2d[iptr];
       
       E1 = (lam + mu) / (mu * ( 3.0 * lam + 2.0 * mu));
       E2 = - lam / ( 2.0 * mu * (3.0 * lam + 2.0 * mu));
@@ -1020,8 +1015,8 @@ int io_line_output_sac(ioline_t *ioline,
 
 int
 io_recv_output_sac_el_iso_strain(iorecv_t *iorecv,
-                     float *restrict lam3d,
-                     float *restrict mu3d,
+                     float *restrict lam2d,
+                     float *restrict mu2d,
                      float dt,
                      char *evtnm,
                      char *output_dir,
@@ -1039,8 +1034,8 @@ io_recv_output_sac_el_iso_strain(iorecv_t *iorecv,
     iorecv_one_t *this_recv = iorecv->recvone + ir;
     int iptr = this_recv->indx1d[0];
 
-    float lam = lam3d[iptr];
-    float mu  =  mu3d[iptr];
+    float lam = lam2d[iptr];
+    float mu  =  mu2d[iptr];
 
     // cmp seq hard-coded, need to revise in the future
     float *Txx = this_recv->seismo + 2 * iorecv->max_nt;

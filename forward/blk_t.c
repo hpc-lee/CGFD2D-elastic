@@ -21,16 +21,16 @@ blk_init(blk_t *blk, const int verbose)
   int ierr = 0;
 
   // alloc struct vars
-  blk->fd            = (fd_t *)malloc(sizeof(fd_t));
+  blk->fd            = (fd_t *)       malloc(sizeof(fd_t));
   blk->gd            = (gd_t        *)malloc(sizeof(gd_t     ));
-  blk->gdcurv_metric = (gdcurv_metric_t *)malloc(sizeof(gdcurv_metric_t));
-  blk->md            = (md_t      *)malloc(sizeof(md_t     ));
-  blk->wav           = (wav_t      *)malloc(sizeof(wav_t     ));
-  blk->src           = (src_t      *)malloc(sizeof(src_t     ));
-  blk->bdry          = (bdry_t     *)malloc(sizeof(bdry_t ));
-  blk->iorecv        = (iorecv_t   *)malloc(sizeof(iorecv_t ));
-  blk->ioline        = (ioline_t   *)malloc(sizeof(ioline_t ));
-  blk->iosnap        = (iosnap_t   *)malloc(sizeof(iosnap_t ));
+  blk->gd_metric     = (gd_metric_t *)malloc(sizeof(gd_metric_t));
+  blk->md            = (md_t        *)malloc(sizeof(md_t     ));
+  blk->wav           = (wav_t       *)malloc(sizeof(wav_t     ));
+  blk->src           = (src_t       *)malloc(sizeof(src_t     ));
+  blk->bdry          = (bdry_t      *)malloc(sizeof(bdry_t ));
+  blk->iorecv        = (iorecv_t    *)malloc(sizeof(iorecv_t ));
+  blk->ioline        = (ioline_t    *)malloc(sizeof(ioline_t ));
+  blk->iosnap        = (iosnap_t    *)malloc(sizeof(iosnap_t ));
 
   sprintf(blk->name, "%s", "single");
 
@@ -169,7 +169,7 @@ blk_print(blk_t *blk)
  *********************************************************************/
 
 int
-blk_dt_esti_curv(gd_t *gdcurv, md_t *md,
+blk_dt_esti_curv(gd_t *gd, md_t *md,
                  float CFL, float *dtmax, float *dtmaxVp, float *dtmaxL,
                  int *dtmaxi, int *dtmaxk)
 {
@@ -178,14 +178,14 @@ blk_dt_esti_curv(gd_t *gdcurv, md_t *md,
   float dtmax_local = 1.0e10;
   float Vp;
 
-  float *restrict x2d = gdcurv->x2d;
-  float *restrict z2d = gdcurv->z2d;
+  float *restrict x2d = gd->x2d;
+  float *restrict z2d = gd->z2d;
 
-  for (int k = gdcurv->nk1; k <= gdcurv->nk2; k++)
+  for (int k = gd->nk1; k <= gd->nk2; k++)
   {
-      for (int i = gdcurv->ni1; i <= gdcurv->ni2; i++)
+      for (int i = gd->ni1; i <= gd->ni2; i++)
       {
-        size_t iptr = i + k * gdcurv->siz_iz;
+        size_t iptr = i + k * gd->siz_iz;
 
         if (md->medium_type == CONST_MEDIUM_ELASTIC_ISO) {
           Vp = sqrt( (md->lambda[iptr] + 2.0 * md->mu[iptr]) / md->rho[iptr] );
@@ -220,8 +220,8 @@ blk_dt_esti_curv(gd_t *gdcurv, md_t *md,
               if (ii != 0 && kk != 0)
               {
                 float p1[] = { x2d[iptr-ii], z2d[iptr-ii] };
-                float p2[] = { x2d[iptr-kk*gdcurv->siz_iz],
-                               z2d[iptr-kk*gdcurv->siz_iz] };
+                float p2[] = { x2d[iptr-kk*gd->siz_iz],
+                               z2d[iptr-kk*gd->siz_iz] };
 
                 float L = fdlib_math_dist_point2line(x0, z0, p1, p2);
 
@@ -250,7 +250,7 @@ blk_dt_esti_curv(gd_t *gdcurv, md_t *md,
 }
 
 int
-blk_dt_esti_cart(gd_t *gdcart, md_t *md,
+blk_dt_esti_cart(gd_t *gd, md_t *md,
                  float CFL, float *dtmax, float *dtmaxVp, float *dtmaxL,
                  int *dtmaxi, int *dtmaxk)
 {
@@ -259,8 +259,8 @@ blk_dt_esti_cart(gd_t *gdcart, md_t *md,
   float dtmax_local = 1.0e10;
   float Vp;
 
-  float dx = gdcart->dx;
-  float dz = gdcart->dz;
+  float dx = gd->dx;
+  float dz = gd->dz;
 
   // length to plane
   float p1[] = {  dx, 0.0 };
@@ -268,11 +268,11 @@ blk_dt_esti_cart(gd_t *gdcart, md_t *md,
 
   float dtLe = fdlib_math_dist_point2line(0.0,0.0, p1, p2);
 
-  for (int k = gdcart->nk1; k <= gdcart->nk2; k++)
+  for (int k = gd->nk1; k <= gd->nk2; k++)
   {
-      for (int i = gdcart->ni1; i <= gdcart->ni2; i++)
+      for (int i = gd->ni1; i <= gd->ni2; i++)
       {
-        size_t iptr = i + k * gdcart->siz_iz;
+        size_t iptr = i + k * gd->siz_iz;
 
         if (md->medium_type == CONST_MEDIUM_ELASTIC_ISO) {
           Vp = sqrt( (md->lambda[iptr] + 2.0 * md->mu[iptr]) / md->rho[iptr] );

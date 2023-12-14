@@ -89,7 +89,6 @@ bdry_free_set(gd_t    *gd,
   bdryfree->vecA = vecA;
   bdryfree->vecVx2Vz2 = vecVx2Vz;
 
-
   return ierr;
 }
 

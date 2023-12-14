@@ -21,7 +21,7 @@ sv_curv_col_ac_iso_onestage(
             float *restrict rhs, 
             wav_t  *wav,
             gd_t   *gd,
-            gdcurv_metric_t  *metric,
+            gd_metric_t  *metric,
             md_t *md,
             bdry_t *bdry,
             src_t *src,
@@ -43,10 +43,10 @@ sv_curv_col_ac_iso_onestage(
   float *restrict xi_z  = metric->xi_z;
   float *restrict zt_x  = metric->zeta_x;
   float *restrict zt_z  = metric->zeta_z;
-  float *restrict jac3d = metric->jac;
+  float *restrict jac2d = metric->jac;
 
-  float *restrict kappa3d = md->kappa;
-  float *restrict slw3d = md->rho;
+  float *restrict kappa2d = md->kappa;
+  float *restrict slw2d = md->rho;
 
   // grid size
   int ni1 = gd->ni1;
@@ -92,7 +92,7 @@ sv_curv_col_ac_iso_onestage(
   sv_curv_col_ac_iso_rhs_inner(Vx,Vz,P,
                                hVx,hVz,hP,
                                xi_x, xi_z, zt_x, zt_z,
-                               kappa3d, slw3d,
+                               kappa2d, slw2d,
                                ni1,ni2,nk1,nk2,siz_iz,
                                fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
                                fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
@@ -106,7 +106,7 @@ sv_curv_col_ac_iso_onestage(
     // velocity: vlow
     sv_curv_col_ac_iso_rhs_vlow_z2(Vx,Vz,hP,
                                    xi_x, xi_z, zt_x, zt_z,
-                                   kappa3d, slw3d,
+                                   kappa2d, slw2d,
                                    ni1,ni2,nk1,nk2,siz_iz,
                                    fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
                                    num_of_fdz_op,fdz_op,fdz_max_len,
@@ -119,7 +119,7 @@ sv_curv_col_ac_iso_onestage(
     sv_curv_col_ac_iso_rhs_cfspml(Vx,Vz,P,
                                   hVx,hVz,hP,
                                   xi_x, xi_z, zt_x, zt_z,
-                                  kappa3d, slw3d,
+                                  kappa2d, slw2d,
                                   nk2, siz_iz,
                                   fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
                                   fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
@@ -132,7 +132,7 @@ sv_curv_col_ac_iso_onestage(
   if (src->total_number > 0)
   {
     sv_curv_col_ac_iso_rhs_src(hVx,hVz,hP,
-                               jac3d, slw3d, 
+                               jac2d, slw2d, 
                                src,
                                verbose);
   }
@@ -153,7 +153,7 @@ sv_curv_col_ac_iso_rhs_inner(
               float *restrict hP, 
               float *restrict xi_x, float *restrict xi_z,
               float *restrict zt_x, float *restrict zt_z,
-              float *restrict kappa3d, float *restrict slw3d,
+              float *restrict kappa2d, float *restrict slw2d,
               int ni1, int ni2, int nk1, int nk2,
               size_t siz_iz,
               int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
@@ -221,8 +221,8 @@ sv_curv_col_ac_iso_rhs_inner(
         ztz = zt_z[iptr];
 
         // medium
-        kappa = kappa3d[iptr];
-        slw = slw3d[iptr];
+        kappa = kappa2d[iptr];
+        slw = slw2d[iptr];
 
         // moment equation
         hVx[iptr] = - slw*( xix*DxP  
@@ -293,7 +293,7 @@ sv_curv_col_ac_iso_rhs_vlow_z2(
                float *restrict hP, 
                float *restrict xi_x, float *restrict xi_z,
                float *restrict zt_x, float *restrict zt_z,
-               float *restrict kappa3d, float *restrict slw3d,
+               float *restrict kappa2d, float *restrict slw2d,
                int ni1, int ni2, int nk1, int nk2,
                size_t siz_iz,
                int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
@@ -356,7 +356,7 @@ sv_curv_col_ac_iso_rhs_vlow_z2(
         ztz = zt_z[iptr];
 
         // medium
-        kappa = kappa3d[iptr];
+        kappa = kappa2d[iptr];
 
         // Vx derivatives
         M_FD_SHIFT(DxVx, Vx, iptr, fdx_len, lfdx_shift, lfdx_coef, n_fd);
@@ -400,7 +400,7 @@ sv_curv_col_ac_iso_rhs_cfspml(
                float *restrict hP,
                float *restrict xi_x, float *restrict xi_z,
                float *restrict zt_x, float *restrict zt_z,
-               float *restrict kappa3d, float *restrict slw3d,
+               float *restrict kappa2d, float *restrict slw2d,
                int nk2, size_t siz_iz,
                int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
                int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef,
@@ -493,8 +493,8 @@ sv_curv_col_ac_iso_rhs_cfspml(
               xiz = xi_z[iptr];
 
               // medium
-              kappa = kappa3d[iptr];
-              slw = slw3d[iptr];
+              kappa = kappa2d[iptr];
+              slw = slw2d[iptr];
 
               // xi derivatives
               M_FD_SHIFT(DxVx , Vx , iptr, fdx_len, lfdx_shift, lfdx_coef, n_fd);
@@ -547,8 +547,8 @@ sv_curv_col_ac_iso_rhs_cfspml(
               ztz = zt_z[iptr];
 
               // medium
-              slw = slw3d[iptr];
-              kappa = kappa3d[iptr];
+              slw = slw2d[iptr];
+              kappa = kappa2d[iptr];
 
               // zt derivatives
               M_FD_SHIFT(DzVx , Vx , iptr, fdz_len, lfdz_shift, lfdz_coef, n_fd);
@@ -593,7 +593,7 @@ int
 sv_curv_col_ac_iso_rhs_src(
              float *restrict hVx , float *restrict hVz ,
              float *restrict hP, 
-             float *restrict jac3d, float *restrict slw3d,
+             float *restrict jac2d, float *restrict slw2d,
              src_t *src, // short nation for reference member
              const int verbose)
 {
@@ -641,13 +641,13 @@ sv_curv_col_ac_iso_rhs_src(
         float coef = ptr_ext_coef[i_ext];
 
         if (src->force_actived == 1) {
-          float V = coef * slw3d[iptr] / jac3d[iptr];
+          float V = coef * slw2d[iptr] / jac2d[iptr];
           hVx[iptr] += fx * V;
           hVz[iptr] += fz * V;
         }
 
         if (src->moment_actived == 1) {
-          float rjac = coef / jac3d[iptr];
+          float rjac = coef / jac2d[iptr];
           hP[iptr] -= Mii * rjac;
         }
       } // i_ext

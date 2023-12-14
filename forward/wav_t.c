@@ -1,5 +1,5 @@
 /*********************************************************************
- * wavefield for 3d elastic 1st-order equations
+ * wavefield for 2d elastic 1st-order equations
  **********************************************************************/
 
 #include <stdlib.h>
@@ -26,7 +26,7 @@ wav_init(gd_t *gd,
   V->nz   = gd->nz;
   V->nlevel = number_of_levels;
 
-  V->siz_iz   = V->nx;
+  V->siz_iz    = V->nx;
   V->siz_icmp  = V->nx * V->nz;
 
   V->nmaxwell = nmaxwell;
@@ -42,27 +42,27 @@ wav_init(gd_t *gd,
   // vars
   // 2 Vi, 3 Tij, 4 rk stages
   V->v4d = (float *) fdlib_mem_calloc_1d_float(V->siz_ilevel * V->nlevel,
-                        0.0, "v4d, wf_el3d_1st");
+                        0.0, "v4d, wf_el2d_1st");
   // position of each var
   size_t *cmp_pos = (size_t *) fdlib_mem_calloc_1d_sizet(
-                      V->ncmp, 0, "w3d_pos, wf_el3d_1st");
+                      V->ncmp, 0, "w2d_pos, wf_el2d_1st");
   // name of each var
   char **cmp_name = (char **) fdlib_mem_malloc_2l_char(
-                      V->ncmp, CONST_MAX_STRLEN, "w3d_name, wf_el3d_1st");
+                      V->ncmp, CONST_MAX_STRLEN, "w2d_name, wf_el2d_1st");
   if (visco_type == CONST_VISCO_GMB)
   {
     V->Jxx_pos = (size_t *) fdlib_mem_calloc_1d_sizet(
-                nmaxwell, 0, "Jxx_pos, wf_el3d_1st");
+                nmaxwell, 0, "Jxx_pos, wf_el2d_1st");
     V->Jzz_pos = (size_t *) fdlib_mem_calloc_1d_sizet(
-                nmaxwell, 0, "Jzz_pos, wf_el3d_1st");
+                nmaxwell, 0, "Jzz_pos, wf_el2d_1st");
     V->Jxz_pos = (size_t *) fdlib_mem_calloc_1d_sizet(
-                nmaxwell, 0, "Jxz_pos, wf_el3d_1st");
+                nmaxwell, 0, "Jxz_pos, wf_el2d_1st");
     V->Jxx_seq = (size_t *) fdlib_mem_calloc_1d_sizet(
-                nmaxwell, 0, "Jxx_seq, wf_el3d_1st");
+                nmaxwell, 0, "Jxx_seq, wf_el2d_1st");
     V->Jzz_seq = (size_t *) fdlib_mem_calloc_1d_sizet(
-                nmaxwell, 0, "Jzz_seq, wf_el3d_1st");
+                nmaxwell, 0, "Jzz_seq, wf_el2d_1st");
     V->Jxz_seq = (size_t *) fdlib_mem_calloc_1d_sizet(
-                nmaxwell, 0, "Jxz_seq, wf_el3d_1st");
+                nmaxwell, 0, "Jxz_seq, wf_el2d_1st");
   }
 
   // set value
@@ -75,8 +75,8 @@ wav_init(gd_t *gd,
   int icmp = 0;
 
   /*
-   * 0-3: Vx,Vy,Vz
-   * 4-9: Txx,Tyy,Tzz,Txz,Tyz,Txy
+   * 0-1: Vx,Vz
+   * 2-4: Txx,Tzz,Txz
    */
 
   sprintf(cmp_name[icmp],"%s","Vx");
@@ -152,13 +152,13 @@ wav_ac_init(gd_t *gd,
   // vars
   // 2 Vi, 1 P, 4 rk stages
   V->v4d = (float *) fdlib_mem_calloc_1d_float(V->siz_ilevel * V->nlevel,
-                        0.0, "v5d, wf_ac3d_1st");
+                        0.0, "v5d, wf_ac2d_1st");
   // position of each var
   size_t *cmp_pos = (size_t *) fdlib_mem_calloc_1d_sizet(
-                      V->ncmp, 0, "w3d_pos, wf_ac3d_1st");
+                      V->ncmp, 0, "w2d_pos, wf_ac2d_1st");
   // name of each var
   char **cmp_name = (char **) fdlib_mem_malloc_2l_char(
-                      V->ncmp, CONST_MAX_STRLEN, "w3d_name, wf_ac3d_1st");
+                      V->ncmp, CONST_MAX_STRLEN, "w2d_name, wf_ac2d_1st");
   
   // set value
   for (int icmp=0; icmp < V->ncmp; icmp++)

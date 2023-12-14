@@ -29,7 +29,7 @@ typedef struct
   gd_t *gd;
 
   // grid metrics: jac, xi_x, etc
-  gdcurv_metric_t *gdcurv_metric;
+  gd_metric_t *gd_metric;
 
   // media: rho, lambda, mu etc
   md_t *md;
@@ -81,12 +81,12 @@ int
 blk_print(blk_t *blk);
 
 int
-blk_dt_esti_curv(gd_t *gdcurv, md_t *md,
+blk_dt_esti_curv(gd_t *gd, md_t *md,
                  float CFL, float *dtmax, float *dtmaxVp, float *dtmaxL,
                  int *dtmaxi, int *dtmaxk);
 
 int
-blk_dt_esti_cart(gd_t *gdcart, md_t *md,
+blk_dt_esti_cart(gd_t *gd, md_t *md,
                  float CFL, float *dtmax, float *dtmaxVp, float *dtmaxL,
                  int *dtmaxi, int *dtmaxk);
 

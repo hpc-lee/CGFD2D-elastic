@@ -31,8 +31,6 @@
 #define PAR_SOURCE_JSON  1
 #define PAR_SOURCE_FILE  3
 
-#define VISCO_LS_MAXSIZE  20
-
 typedef struct{
 
   //-- dirs and file name

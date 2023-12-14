@@ -12,7 +12,7 @@
 #include "blk_t.h"
 #include "drv_rk_curv_col.h"
 #include "sv_curv_col_el.h"
-#include "sv_curv_col_el_vis.h"
+#include "sv_curv_col_vis_iso.h"
 #include "sv_curv_col_el_iso.h"
 #include "sv_curv_col_el_vti.h"
 #include "sv_curv_col_el_aniso.h"
@@ -26,7 +26,7 @@ int
 drv_rk_curv_col_allstep(
   fd_t        *fd,
   gd_t        *gd,
-  gdcurv_metric_t *metric,
+  gd_metric_t *metric,
   md_t      *md,
   src_t      *src,
   bdry_t *bdry,
@@ -102,12 +102,7 @@ drv_rk_curv_col_allstep(
   {
     if(md->medium_type == CONST_MEDIUM_ELASTIC_ISO)
     {
-      if (md->visco_type == CONST_VISCO_GMB) 
-      {
-        sv_curv_col_el_vis_dvh2dvz(gd,metric,md,bdry,verbose);
-      } else {
-        sv_curv_col_el_iso_dvh2dvz(gd,metric,md,bdry,verbose);
-      }
+      sv_curv_col_el_iso_dvh2dvz(gd,metric,md,bdry,verbose);
     } 
     else if(md->medium_type == CONST_MEDIUM_ELASTIC_ANISO) 
     {
@@ -116,6 +111,13 @@ drv_rk_curv_col_allstep(
     else if(md->medium_type == CONST_MEDIUM_ELASTIC_VTI)
     {
       sv_curv_col_el_vti_dvh2dvz(gd,metric,md,bdry,verbose);
+    } 
+    else if(md->medium_type == CONST_MEDIUM_VISCOELASTIC_ISO)
+    {
+      if(md->visco_type == CONST_VISCO_GMB)
+      {
+        sv_curv_col_vis_iso_dvh2dvz(gd,metric,md,bdry,verbose);
+      }
     } 
     else if(md->medium_type == CONST_MEDIUM_ACOUSTIC_ISO) 
     {
@@ -177,16 +179,6 @@ drv_rk_curv_col_allstep(
       switch (md->medium_type)
       {
         case CONST_MEDIUM_ELASTIC_ISO : {
-          if (md->visco_type == CONST_VISCO_GMB) 
-          {
-            sv_curv_col_el_vis_onestage(
-                w_cur,w_rhs,wav,
-                gd, metric, md, bdry, src,
-                fd->num_of_fdx_op, fd->pair_fdx_op[ipair][istage],
-                fd->num_of_fdz_op, fd->pair_fdz_op[ipair][istage],
-                fd->fdz_max_len,
-                verbose);
-          } else {
             sv_curv_col_el_iso_onestage(
                 w_cur,w_rhs,wav,
                 gd, metric, md, bdry, src,
@@ -194,7 +186,6 @@ drv_rk_curv_col_allstep(
                 fd->num_of_fdz_op, fd->pair_fdz_op[ipair][istage],
                 fd->fdz_max_len,
                 verbose);
-          }
 
           break;
         }
@@ -233,6 +224,30 @@ drv_rk_curv_col_allstep(
               verbose);
 
           break;
+        }
+
+        case CONST_MEDIUM_VISCOELASTIC_ISO : {
+          if (md->visco_type == CONST_VISCO_GRAVES)
+          {
+            sv_curv_col_el_iso_onestage(
+                w_cur,w_rhs,wav,
+                gd, metric, md, bdry, src,
+                fd->num_of_fdx_op, fd->pair_fdx_op[ipair][istage],
+                fd->num_of_fdz_op, fd->pair_fdz_op[ipair][istage],
+                fd->fdz_max_len,
+                verbose);
+          }
+            
+          if (md->visco_type == CONST_VISCO_GMB) 
+          {
+            sv_curv_col_vis_iso_onestage(
+                w_cur,w_rhs,wav,
+                gd, metric, md, bdry, src,
+                fd->num_of_fdx_op, fd->pair_fdx_op[ipair][istage],
+                fd->num_of_fdz_op, fd->pair_fdz_op[ipair][istage],
+                fd->fdz_max_len,
+                verbose);
+          }
         }
       }
       // rk start
@@ -344,9 +359,9 @@ drv_rk_curv_col_allstep(
         }
 
         // apply Qs
-        if (md->visco_type == CONST_VISCO_GRAVES_QS) {
-          sv_curv_graves_Qs(w_end, wav->ncmp, dt, gd, md);
-        }
+        //if (md->visco_type == CONST_VISCO_GRAVES_QS) {
+        //  sv_curv_graves_Qs(w_end, wav->ncmp, dt, gd, md);
+        //}
         
         // pml_end
         if(bdry->is_enable_pml == 1)
@@ -360,6 +375,15 @@ drv_rk_curv_col_allstep(
                 }
               }
             }
+          }
+        }
+        if (md->medium_type == CONST_MEDIUM_VISCOELASTIC_ISO &&
+            md->visco_type == CONST_VISCO_GMB) 
+        {
+          if (bdry->is_sides_free[CONST_NDIM-1][1] == 1)
+          {
+            sv_curv_col_vis_iso_free(w_end,wav,gd,
+                                     metric,md,bdry,verbose);
           }
         }
       }

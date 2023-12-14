@@ -7,7 +7,7 @@
  *macro for fd opterators
  *******************************************************************************/
 
-// use siz_shift to find adjacent point of the stentil for 3d var
+// use siz_shift to find adjacent point of the stentil for 2d var
 #define M_FD_SHIFT(deriv, var, iptr, fd_length, fd_shift, fd_coef, n) \
    deriv = fd_coef[0] * var[iptr + fd_shift[0]]; \
    for (n=1; n<fd_length; n++) { \
@@ -37,7 +37,7 @@
        deriv += fd_coef[n] * var[n]; \
    }
 
-// use indx relative to cur point as (-1,0,1), need to multiply siz_shift for 3d array
+// use indx relative to cur point as (-1,0,1), need to multiply siz_shift for 2d array
 #define M_FD_INDX(deriv, var, iptr, fd_length, fd_indx, fd_coef, shift, n) \
    deriv = fd_coef[0] * var[iptr + fd_shift[0] * shift]; \
    for (n=1; n<fd_length; n++) { \
@@ -155,7 +155,7 @@ typedef struct {
   //float  **filtz_all_coef;
 
   //----------------------------------------------------------------------------
-  // pairs for 3d space for MacCormack-type schemes
+  // pairs for 2d space for MacCormack-type schemes
   //----------------------------------------------------------------------------
 
   int num_of_pairs;

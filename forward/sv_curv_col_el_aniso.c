@@ -23,7 +23,7 @@ sv_curv_col_el_aniso_onestage(
                float *restrict rhs, 
                wav_t  *wav,
                gd_t   *gd,
-               gdcurv_metric_t  *metric,
+               gd_metric_t  *metric,
                md_t *md,
                bdry_t *bdry,
                src_t *src,
@@ -49,7 +49,7 @@ sv_curv_col_el_aniso_onestage(
   float *restrict xi_z  = metric->xi_z;
   float *restrict zt_x  = metric->zeta_x;
   float *restrict zt_z  = metric->zeta_z;
-  float *restrict jac3d = metric->jac;
+  float *restrict jac2d = metric->jac;
 
   float *restrict c11   = md->c11;
   float *restrict c13   = md->c13;
@@ -57,7 +57,7 @@ sv_curv_col_el_aniso_onestage(
   float *restrict c33   = md->c33;
   float *restrict c35   = md->c35;
   float *restrict c55   = md->c55;
-  float *restrict slw3d = md->rho;
+  float *restrict slw2d = md->rho;
 
   // grid size
   int ni1 = gd->ni1;
@@ -98,7 +98,7 @@ sv_curv_col_el_aniso_onestage(
                                  c11,    c13,    c15,    
                                          c33,    c35,    
                                                  c55,    
-                                                          slw3d,
+                                                          slw2d,
                                  ni1,ni2,nk1,nk2,siz_iz,
                                  fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
                                  fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
@@ -112,7 +112,7 @@ sv_curv_col_el_aniso_onestage(
     // tractiong
     sv_curv_col_el_rhs_timg_z2(Txx,Tzz,Txz,hVx,hVz,
                                xi_x, xi_z, zt_x, zt_z,
-                               jac3d, slw3d,
+                               jac2d, slw2d,
                                ni1,ni2,nk1,nk2,siz_iz,
                                fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
                                fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
@@ -124,7 +124,7 @@ sv_curv_col_el_aniso_onestage(
                                      c11,    c13,    c15,    
                                              c33,    c35,    
                                                      c55,    
-                                                              slw3d,
+                                                              slw2d,
                                      vecVx2Vz,
                                      ni1,ni2,nk1,nk2,siz_iz,
                                      fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
@@ -141,7 +141,7 @@ sv_curv_col_el_aniso_onestage(
                                     c11,    c13,    c15,    
                                             c33,    c35,    
                                                     c55,    
-                                                             slw3d,
+                                                             slw2d,
                                     nk2, siz_iz,
                                     fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
                                     fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
@@ -154,7 +154,7 @@ sv_curv_col_el_aniso_onestage(
   if (src->total_number > 0)
   {
     sv_curv_col_el_rhs_src(hVx,hVz,hTxx,hTzz,hTxz,
-                           jac3d, slw3d, 
+                           jac2d, slw2d, 
                            src,
                            verbose);
   }
@@ -179,7 +179,7 @@ sv_curv_col_el_aniso_rhs_inner(
                 float *restrict c11d, float *restrict c13d,
                 float *restrict c15d, float *restrict c33d,
                 float *restrict c35d, float *restrict c55d,
-                float *restrict slw3d,
+                float *restrict slw2d,
                 int ni1, int ni2, int nk1, int nk2,
                 size_t siz_iz,
                 int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
@@ -262,7 +262,7 @@ sv_curv_col_el_aniso_rhs_inner(
         ztz = zt_z[iptr];
 
         // medium
-        slw = slw3d[iptr];
+        slw = slw2d[iptr];
         c11 = c11d[iptr];
         c13 = c13d[iptr];
         c15 = c15d[iptr];
@@ -312,7 +312,7 @@ sv_curv_col_el_aniso_rhs_vlow_z2(
                 float *restrict c11d, float *restrict c13d,
                 float *restrict c15d, float *restrict c33d,
                 float *restrict c35d, float *restrict c55d,
-                float *restrict slw3d,
+                float *restrict slw2d,
                 float *restrict vecVx2Vz,
                 int ni1, int ni2, int nk1, int nk2,
                 size_t siz_iz,
@@ -379,7 +379,7 @@ sv_curv_col_el_aniso_rhs_vlow_z2(
         ztz = zt_z[iptr];
 
         // medium
-        slw = slw3d[iptr];
+        slw = slw2d[iptr];
         c11 = c11d[iptr];
         c13 = c13d[iptr];
         c15 = c15d[iptr];
@@ -447,7 +447,7 @@ sv_curv_col_el_aniso_rhs_cfspml(
                float *restrict c11d, float *restrict c13d,
                float *restrict c15d, float *restrict c33d,
                float *restrict c35d, float *restrict c55d,
-               float *restrict slw3d,
+               float *restrict slw2d,
                int nk2, size_t siz_iz,
                int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
                int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef,
@@ -551,7 +551,7 @@ sv_curv_col_el_aniso_rhs_cfspml(
               xiz = xi_z[iptr];
 
               // medium
-              slw = slw3d[iptr];
+              slw = slw2d[iptr];
               c11 = c11d[iptr];
               c13 = c13d[iptr];
               c15 = c15d[iptr];
@@ -652,7 +652,7 @@ sv_curv_col_el_aniso_rhs_cfspml(
               ztz = zt_z[iptr];
 
               // medium
-              slw = slw3d[iptr];
+              slw = slw2d[iptr];
               c11 = c11d[iptr];
               c13 = c13d[iptr];
               c15 = c15d[iptr];
@@ -711,7 +711,7 @@ sv_curv_col_el_aniso_rhs_cfspml(
 
 int
 sv_curv_col_el_aniso_dvh2dvz(gd_t        *gd,
-                             gdcurv_metric_t *metric,
+                             gd_metric_t *metric,
                              md_t       *md,
                              bdry_t      *bdry,
                              const int verbose)

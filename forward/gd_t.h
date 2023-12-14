@@ -79,7 +79,7 @@ typedef struct {
 
   size_t *cmp_pos;
   char  **cmp_name;
-} gdcurv_metric_t;
+} gd_metric_t;
 
 
 /*************************************************
@@ -87,57 +87,57 @@ typedef struct {
  *************************************************/
 
 int 
-gd_curv_init(gd_t *gdcurv);
+gd_curv_init(gd_t *gd);
 
 int 
 gd_curv_metric_init(gd_t        *gd,
-                    gdcurv_metric_t *metric);
+                    gd_metric_t *metric);
 int
-gd_curv_metric_cal(gd_t        *gdcurv,
-                   gdcurv_metric_t *metric,
+gd_curv_metric_cal(gd_t        *gd,
+                   gd_metric_t *metric,
                    int fd_len, int *restrict fd_indx, float *restrict fd_coef);
 
 int
-mirror_symmetry(gd_t *gdcurv,float *v3d, int ncmp);
+mirror_symmetry(gd_t *gd,float *v3d, int ncmp);
 
 int
-geometric_symmetry(gd_t *gdcurv,float *v3d, int ncmp);
+geometric_symmetry(gd_t *gd,float *v3d, int ncmp);
 
 int
-gd_curv_gen_cart(gd_t *gdcurv,
+gd_curv_gen_cart(gd_t *gd,
                  float dx, float x0,
                  float dz, float z0);
 
 int
-gd_curv_coord_import(gd_t *gdcurv, char *import_dir);
+gd_curv_coord_import(gd_t *gd, char *import_dir);
 
 int
-gd_curv_coord_export(gd_t *gdcurv,
+gd_curv_coord_export(gd_t *gd,
                      char *output_dir);
 
 int
-gd_cart_coord_export(gd_t *gdcart,
+gd_cart_coord_export(gd_t *gd,
                      char *output_dir);
 int
 gd_curv_metric_import(gd_t *gd, 
-                      gdcurv_metric_t *metric,
+                      gd_metric_t *metric,
                       char *import_dir);
 
 int
 gd_curv_metric_export(gd_t        *gd,
-                      gdcurv_metric_t *metric,
+                      gd_metric_t *metric,
                       char *output_dir);
 
 int
-gd_curv_set_minmax(gd_t *gdcurv);
+gd_curv_set_minmax(gd_t *gd);
 
 int 
-gd_cart_init_set(gd_t *gdcart,
+gd_cart_init_set(gd_t *gd,
                  float dx, float x0_glob,
                  float dz, float z0_glob);
 
 int
-gd_cart_coord_to_local_indx(gd_t *gdcart,
+gd_cart_coord_to_local_indx(gd_t *gd,
                             float sx,
                             float sz,
                             int   *ou_si, int *ou_sk,

@@ -22,7 +22,7 @@ sv_curv_col_el_iso_onestage(
                   float *restrict rhs, 
                   wav_t  *wav,
                   gd_t   *gd,
-                  gdcurv_metric_t  *metric,
+                  gd_metric_t  *metric,
                   md_t *md,
                   bdry_t *bdry,
                   src_t *src,
@@ -48,11 +48,11 @@ sv_curv_col_el_iso_onestage(
   float *restrict xi_z  = metric->xi_z;
   float *restrict zt_x  = metric->zeta_x;
   float *restrict zt_z  = metric->zeta_z;
-  float *restrict jac3d = metric->jac;
+  float *restrict jac2d = metric->jac;
 
-  float *restrict lam3d = md->lambda;
-  float *restrict  mu3d = md->mu;
-  float *restrict slw3d = md->rho;
+  float *restrict lam2d = md->lambda;
+  float *restrict  mu2d = md->mu;
+  float *restrict slw2d = md->rho;
 
   // grid size
   int ni1 = gd->ni1;
@@ -90,7 +90,7 @@ sv_curv_col_el_iso_onestage(
   sv_curv_col_el_iso_rhs_inner(Vx,Vz,Txx,Tzz,Txz,
                                hVx,hVz,hTxx,hTzz,hTxz,
                                xi_x, xi_z, zt_x, zt_z,
-                               lam3d, mu3d, slw3d,
+                               lam2d, mu2d, slw2d,
                                ni1,ni2,nk1,nk2,siz_iz,
                                fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
                                fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
@@ -104,7 +104,7 @@ sv_curv_col_el_iso_onestage(
     // tractiong
     sv_curv_col_el_rhs_timg_z2(Txx,Tzz,Txz,hVx,hVz,
                                xi_x, xi_z, zt_x, zt_z,
-                               jac3d, slw3d,
+                               jac2d, slw2d,
                                ni1,ni2,nk1,nk2,siz_iz,
                                fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
                                fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
@@ -113,7 +113,7 @@ sv_curv_col_el_iso_onestage(
     // velocity: vlow
     sv_curv_col_el_iso_rhs_vlow_z2(Vx,Vz,hTxx,hTzz,hTxz,
                                    xi_x, xi_z, zt_x, zt_z,
-                                   lam3d, mu3d, slw3d,
+                                   lam2d, mu2d, slw2d,
                                    vecVx2Vz,
                                    ni1,ni2,nk1,nk2,siz_iz,
                                    fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
@@ -127,7 +127,7 @@ sv_curv_col_el_iso_onestage(
     sv_curv_col_el_iso_rhs_cfspml(Vx,Vz,Txx,Tzz,Txz,
                                   hVx,hVz,hTxx,hTzz,hTxz,
                                   xi_x, xi_z, zt_x, zt_z,
-                                  lam3d, mu3d, slw3d,
+                                  lam2d, mu2d, slw2d,
                                   nk2, siz_iz,
                                   fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
                                   fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
@@ -140,7 +140,7 @@ sv_curv_col_el_iso_onestage(
   if (src->total_number > 0)
   {
     sv_curv_col_el_rhs_src(hVx,hVz,hTxx,hTzz,hTxz,
-                           jac3d, slw3d, 
+                           jac2d, slw2d, 
                            src,
                            verbose);
   }
@@ -163,7 +163,7 @@ sv_curv_col_el_iso_rhs_inner(
                 float *restrict hTxz, 
                 float *restrict xi_x, float *restrict xi_z,
                 float *restrict zt_x, float *restrict zt_z,
-                float *restrict lam3d, float *restrict mu3d, float *restrict slw3d,
+                float *restrict lam2d, float *restrict mu2d, float *restrict slw2d,
                 int ni1, int ni2, int nk1, int nk2,
                 size_t siz_iz, 
                 int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
@@ -243,9 +243,9 @@ sv_curv_col_el_iso_rhs_inner(
         ztz = zt_z[iptr];
 
         // medium
-        lam = lam3d[iptr];
-        mu  =  mu3d[iptr];
-        slw = slw3d[iptr];
+        lam = lam2d[iptr];
+        mu  =  mu2d[iptr];
+        slw = slw2d[iptr];
         lam2mu = lam + 2.0 * mu;
 
         // moment equation
@@ -288,7 +288,7 @@ sv_curv_col_el_iso_rhs_vlow_z2(
                    float *restrict hTxz, 
                    float *restrict xi_x, float *restrict xi_z,
                    float *restrict zt_x, float *restrict zt_z,
-                   float *restrict lam3d, float *restrict mu3d, float *restrict slw3d,
+                   float *restrict lam2d, float *restrict mu2d, float *restrict slw2d,
                    float *restrict vecVx2Vz, 
                    int ni1, int ni2, int nk1, int nk2,
                    size_t siz_iz, 
@@ -352,9 +352,9 @@ sv_curv_col_el_iso_rhs_vlow_z2(
         ztz = zt_z[iptr];
 
         // medium
-        lam = lam3d[iptr];
-        mu  =  mu3d[iptr];
-        slw = slw3d[iptr];
+        lam = lam2d[iptr];
+        mu  =  mu2d[iptr];
+        slw = slw2d[iptr];
         lam2mu = lam + 2.0 * mu;
 
         // Vx derivatives
@@ -415,7 +415,7 @@ sv_curv_col_el_iso_rhs_cfspml(
                    float *restrict hTxz, 
                    float *restrict xi_x, float *restrict xi_z,
                    float *restrict zt_x, float *restrict zt_z,
-                   float *restrict lam3d, float *restrict  mu3d, float *restrict slw3d,
+                   float *restrict lam2d, float *restrict  mu2d, float *restrict slw2d,
                    int nk2, size_t siz_iz, 
                    int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
                    int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef,
@@ -517,9 +517,9 @@ sv_curv_col_el_iso_rhs_cfspml(
               //xiz = fabs(xiz);
 
               // medium
-              lam = lam3d[iptr];
-              mu  =  mu3d[iptr];
-              slw = slw3d[iptr];
+              lam = lam2d[iptr];
+              mu  =  mu2d[iptr];
+              slw = slw2d[iptr];
               lam2mu = lam + 2.0 * mu;
 
               // xi derivatives
@@ -622,9 +622,9 @@ sv_curv_col_el_iso_rhs_cfspml(
               //ztx = fabs(ztx);
 
               // medium
-              lam = lam3d[iptr];
-              mu  =  mu3d[iptr];
-              slw = slw3d[iptr];
+              lam = lam2d[iptr];
+              mu  =  mu2d[iptr];
+              slw = slw2d[iptr];
               lam2mu = lam + 2.0 * mu;
 
               // zt derivatives
@@ -676,7 +676,7 @@ sv_curv_col_el_iso_rhs_cfspml(
 
 int
 sv_curv_col_el_iso_dvh2dvz(gd_t        *gd,
-                           gdcurv_metric_t *metric,
+                           gd_metric_t *metric,
                            md_t       *md,
                            bdry_t     *bdry,
                            const int verbose)
@@ -697,8 +697,8 @@ sv_curv_col_el_iso_dvh2dvz(gd_t        *gd,
   float *restrict zt_x = metric->zeta_x;
   float *restrict zt_z = metric->zeta_z;
 
-  float *restrict lam3d = md->lambda;
-  float *restrict  mu3d = md->mu;
+  float *restrict lam2d = md->lambda;
+  float *restrict  mu2d = md->mu;
 
   float *vecVx2Vz = bdry->vecVx2Vz2;
   
@@ -714,8 +714,8 @@ sv_curv_col_el_iso_dvh2dvz(gd_t        *gd,
     float e21 = zt_x[iptr];
     float e22 = zt_z[iptr];
 
-    float lam    = lam3d[iptr];
-    float miu    =  mu3d[iptr];
+    float lam    = lam2d[iptr];
+    float miu    =  mu2d[iptr];
     float lam2mu = lam + 2.0f * miu;
 
     // first dim: irow; sec dim: jcol, as Fortran code

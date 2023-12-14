@@ -406,10 +406,10 @@ par_read_from_str(const char *str, par_t *par)
   par->visco_Qs_freq = 0.0;
   par->visco_itype = 0;
   if (item = cJSON_GetObjectItem(root, "visco_config")) {
-    if (subitem = cJSON_GetObjectItem(item, "type")) {
+    if (subitem = cJSON_GetObjectItem(item, "visco_type")) {
       sprintf(par->visco_type, "%s", subitem->valuestring);
       if (strcmp(par->visco_type, "graves_Qs")==0) {
-        par->visco_itype = CONST_VISCO_GRAVES_QS;
+        par->visco_itype = CONST_VISCO_GRAVES;
       }else if (strcmp(par->visco_type, "gmb")==0) {
         par->visco_itype = CONST_VISCO_GMB;
       } else {
@@ -780,7 +780,7 @@ par_print(par_t *par)
   //fprintf(stdout, " media_input_way = %s\n", par->media_input_way);
   //fprintf(stdout, " media_input_itype = %d\n", par->media_input_itype);
 
-  if (par->visco_itype == CONST_VISCO_GRAVES_QS) {
+  if (par->visco_itype == CONST_VISCO_GRAVES) {
     fprintf(stdout, "-------------------------------------------------------\n");
     fprintf(stdout, "--> visco info.\n");
     fprintf(stdout, "-------------------------------------------------------\n");

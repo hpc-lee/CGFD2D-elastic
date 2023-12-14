@@ -179,8 +179,8 @@ io_snap_pack_buff(float *restrict var,
                   float *restrict buff);
 
 int
-io_snap_stress_to_strain_eliso(float *lam3d,
-                               float *mu3d,
+io_snap_stress_to_strain_eliso(float *lam2d,
+                               float *mu2d,
                                float *Txx,
                                float *Tzz,
                                float *Txz,
@@ -221,8 +221,8 @@ io_line_output_sac(ioline_t *ioline,
 
 int
 io_recv_output_sac_el_iso_strain(iorecv_t *iorecv,
-                     float *restrict lam3d,
-                     float *restrict mu3d,
+                     float *restrict lam2d,
+                     float *restrict mu2d,
                      float dt,
                      char *evtnm,
                      char *output_dir,

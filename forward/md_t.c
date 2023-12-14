@@ -18,38 +18,37 @@ md_init(gd_t *gd, md_t *md, int media_type, int visco_type, int nmaxwell)
 {
   int ierr = 0;
 
-  md->nx   = gd->nx;
-  md->nz   = gd->nz;
+  md->nx = gd->nx;
+  md->nz = gd->nz;
 
   md->siz_iz   = md->nx;
-  md->siz_icmp  = md->nx * md->nz;
+  md->siz_icmp = md->nx * md->nz;
 
   // media type
   md->medium_type = media_type;
-
   if (media_type == CONST_MEDIUM_ACOUSTIC_ISO)
   {
     md->ncmp = 2; // rho + kappa
   }
   else if (media_type == CONST_MEDIUM_ELASTIC_ISO)
   {
-      md->ncmp = 3; // rho + lambda + mu
+    md->ncmp = 3; // rho + lambda + mu
   } else if (media_type == CONST_MEDIUM_ELASTIC_VTI) {
-      md->ncmp = 5; // c11 13 33 55 + rho
+    md->ncmp = 5; // c11 13 33 55 + rho
   } else if (media_type == CONST_MEDIUM_ELASTIC_ANISO){
-      md->ncmp = 7; // 11, 13, 15, 33, 35, 55, rho
+    md->ncmp = 7; // 11, 13, 15, 33, 35, 55, rho
+  } else if (media_type == CONST_MEDIUM_VISCOELASTIC_ISO) {
+    // visco
+    md->visco_type = visco_type;
+    if (visco_type == CONST_VISCO_GRAVES) {
+     md->ncmp = 3 + 1;
+    } else if(visco_type == CONST_VISCO_GMB) {
+      md->nmaxwell = nmaxwell;
+      md->ncmp = 3 + 2*md->nmaxwell + 2;
+    }
   } else{
-      fprintf(stderr,"ERROR: media_type=%d is not implemented\n",media_type);
-      exit(1);
-  }
-
-  // visco
-  md->visco_type = visco_type;
-  if (visco_type == CONST_VISCO_GRAVES_QS) {
-   md->ncmp += 1;
-  } else if(visco_type == CONST_VISCO_GMB) { 
-    md->nmaxwell = nmaxwell;
-    md->ncmp += 2*md->nmaxwell+2;
+    fprintf(stderr,"ERROR: media_type=%d is not implemented\n",media_type);
+    exit(1);
   }
 
   /*
@@ -163,34 +162,43 @@ md_init(gd_t *gd, md_t *md, int media_type, int visco_type, int nmaxwell)
     md->c55 = md->v3d + cmp_pos[icmp];
   }
 
-  // plus Qs
-  if (visco_type == CONST_VISCO_GRAVES_QS) {
-    icmp += 1;
-    sprintf(cmp_name[icmp],"%s","Qs");
-    md->Qs = md->v3d + cmp_pos[icmp];
-  }
-
-  // plus Qp,Qs,Ylam,Ymu
-  if (visco_type == CONST_VISCO_GMB) {
-    icmp += 1;
-    sprintf(cmp_name[icmp],"%s","Qp");
-    md->Qp = md->v3d + cmp_pos[icmp];
-
-    icmp += 1;
-    sprintf(cmp_name[icmp],"%s","Qs");
-    md->Qs = md->v3d + cmp_pos[icmp];
-
-    for(int i=0; i < md->nmaxwell; i++)
-    { 
+  // vis_iso
+  if (media_type == CONST_MEDIUM_VISCOELASTIC_ISO)
+  {
+    if (visco_type == CONST_VISCO_GRAVES) {
       icmp += 1;
-      sprintf(cmp_name[icmp],"%s%d","Ylam",i+1);
-      md->Ylam[i] = md->v3d + cmp_pos[icmp];
+      sprintf(cmp_name[icmp],"%s","Qs");
+      md->Qs = md->v3d + cmp_pos[icmp];
+    } else if(visco_type == CONST_VISCO_GMB) {
+      icmp += 1;
+      sprintf(cmp_name[icmp],"%s","lambda");
+      md->lambda = md->v3d + cmp_pos[icmp];
 
       icmp += 1;
-      sprintf(cmp_name[icmp],"%s%d","Ymu",i+1);
-      md->Ymu[i] = md->v3d + cmp_pos[icmp];
+      sprintf(cmp_name[icmp],"%s","mu");
+      md->mu = md->v3d + cmp_pos[icmp];
+
+      icmp += 1;
+      sprintf(cmp_name[icmp],"%s","Qp");
+      md->Qp = md->v3d + cmp_pos[icmp];
+
+      icmp += 1;
+      sprintf(cmp_name[icmp],"%s","Qs");
+      md->Qs = md->v3d + cmp_pos[icmp];
+
+      for(int i=0; i < md->nmaxwell; i++)
+      { 
+        icmp += 1;
+        sprintf(cmp_name[icmp],"%s%d","Ylam",i+1);
+        md->Ylam[i] = md->v3d + cmp_pos[icmp];
+
+        icmp += 1;
+        sprintf(cmp_name[icmp],"%s%d","Ymu",i+1);
+        md->Ymu[i] = md->v3d + cmp_pos[icmp];
+      }
     }
   }
+
   
   // set pointer
   md->cmp_pos  = cmp_pos;
@@ -354,20 +362,20 @@ md_gen_test_ac_iso(md_t *md)
   int nz = md->nz;
   int siz_iz = md->siz_iz;
 
-  float *kappa3d = md->kappa;
-  float *rho3d = md->rho;
+  float *kappa2d = md->kappa;
+  float *rho2d = md->rho;
 
   for (size_t k=0; k<nz; k++)
   {
-      for (size_t i=0; i<nx; i++)
-      {
-        size_t iptr = i + k * siz_iz;
-        float Vp=3000.0;
-        float rho=1500.0;
-        float kappa = Vp*Vp*rho;
-        kappa3d[iptr] = kappa;
-        rho3d[iptr] = rho;
-      }
+    for (size_t i=0; i<nx; i++)
+    {
+      size_t iptr = i + k * siz_iz;
+      float Vp=3000.0;
+      float rho=1500.0;
+      float kappa = Vp*Vp*rho;
+      kappa2d[iptr] = kappa;
+      rho2d[iptr] = rho;
+    }
   }
 
   return ierr;
@@ -382,9 +390,9 @@ md_gen_test_el_iso(md_t *md)
   int nz = md->nz;
   int siz_iz = md->siz_iz;
 
-  float *lam3d = md->lambda;
-  float  *mu3d = md->mu;
-  float *rho3d = md->rho;
+  float *lam2d = md->lambda;
+  float  *mu2d = md->mu;
+  float *rho2d = md->rho;
 
   for (size_t k=0; k<nz; k++)
   {
@@ -396,9 +404,9 @@ md_gen_test_el_iso(md_t *md)
         float rho=1500.0;
         float mu = Vs*Vs*rho;
         float lam = Vp*Vp*rho - 2.0*mu;
-        lam3d[iptr] = lam;
-         mu3d[iptr] = mu;
-        rho3d[iptr] = rho;
+        lam2d[iptr] = lam;
+         mu2d[iptr] = mu;
+        rho2d[iptr] = rho;
       }
   }
 
@@ -493,41 +501,16 @@ md_gen_test_Qs(md_t *md, float Qs_freq)
   return ierr;
 }
 
-int
-md_gen_test_GMB(md_t *md)
-{
-  int ierr = 0;
-
-  int nx = md->nx;
-  int nz = md->nz;
-  int siz_iz  = md->siz_iz;
-
-  float *Qs = md->Qs;
-  float *Qp = md->Qp;
-
-  for (size_t k=0; k<nz; k++)
-  {
-    for (size_t i=0; i<nx; i++)
-    {
-      size_t iptr = i + k * siz_iz;
-      Qs[iptr] = 4;
-      Qp[iptr] = 8;
-    }
-  }
-
-  return ierr;
-}
-
 /*
  * convert rho to slowness to reduce number of arithmetic cal
  */
 
 int
-md_rho_to_slow(float *restrict rho, size_t siz_volume)
+md_rho_to_slow(float *restrict rho, size_t siz_icmp)
 {
   int ierr = 0;
 
-  for (size_t iptr=0; iptr<siz_volume; iptr++) {
+  for (size_t iptr=0; iptr<siz_icmp; iptr++) {
     if (rho[iptr] > 1e-10) {
       rho[iptr] = 1.0 / rho[iptr];
     } else {
@@ -556,7 +539,7 @@ md_vis_GMB_cal_Y(md_t *md, float freq, float fmin, float fmax)
   int nmaxwell = md->nmaxwell;
   int nx = md->nx;
   int nz = md->nz;
-  int siz_iz  = md->siz_iz;
+  int siz_iz = md->siz_iz;
 
   float *wk = (float *) fdlib_mem_calloc_1d_float(kmax,0,
                                                   "medium_visco_iso_cal");
@@ -586,18 +569,18 @@ md_vis_GMB_cal_Y(md_t *md, float freq, float fmin, float fmax)
     wl[n] = wk[2*n];
   }
 
-  for (size_t k=0; k<nz; k++)
+  for (int k=0; k<nz; k++)
   {
-    for(size_t i=0; i<nx; i++)
+    for(int i=0; i<nx; i++)
     {
       size_t iptr = i + k * siz_iz;
       QP1 = 1.0/Qp[iptr];
       QS1 = 1.0/Qs[iptr];
       lam = lambda[iptr];
       muu = mu[iptr];
-      for(size_t m=0; m<kmax; m++)
+      for(int m=0; m<kmax; m++)
       {
-        for(size_t n=0; n<nmaxwell; n++) 
+        for(int n=0; n<nmaxwell; n++) 
         {
           GP[m][n] = (wl[n]*wk[m]+pow(wl[n],2)*QP1)/(pow(wl[n],2)+pow(wk[m],2));
           GS[m][n] = (wl[n]*wk[m]+pow(wl[n],2)*QS1)/(pow(wl[n],2)+pow(wk[m],2));
@@ -657,21 +640,15 @@ md_vis_GMB_cal_Y(md_t *md, float freq, float fmin, float fmax)
       {
         md->Ylam[n][iptr] = (1+2*md->mu[iptr]/md->lambda[iptr])*YP[n]-2*md->mu[iptr]/md->lambda[iptr]*YS[n];
         md->Ymu[n][iptr]  = YS[n];
+        if(md->Ylam[n][iptr] > 1 || md->Ymu[n][iptr] > 1)
+        {
+          fprintf(stdout,"attention, the coef over the normal range!");
+          fprintf(stdout,"Ylam[%d][%d][%d]=%f,Ymu[%d][%d][%d]=%f\n",
+                          n,i,k,md->Ylam[n][iptr],n,i,k,md->Ymu[n][iptr]);
+        }
       }
     }
   }
-  printf("YP1=%f,YP2=%f\n",YP[0],YP[1]);
-  printf("YS1=%f,YS2=%f\n",YS[0],YS[1]);
-  
-  printf("lam=%f\n",lam);
-  printf("muu=%f\n",muu);
-  printf("kappa=%f\n",kappa);
-  printf("lambda=%f\n",md->lambda[150]);
-  printf("mu=%f\n",md->mu[150]);
-  printf("Ylam1=%f\n",md->Ylam[0][150]);
-  printf("Ylam2=%f\n",md->Ylam[1][150]);
-  printf("Ymu1=%f\n",md->Ymu[0][150]);
-  printf("Ymu2=%f\n",md->Ymu[1][150]);
   
   free(YP);
   free(YS);
@@ -805,6 +782,43 @@ md_visco_LS_mat_inv(float matrix[][VISCO_LS_MAXSIZE], float inverse[][VISCO_LS_M
         matrix[i][j] = matrix[i][j]-matrix[k][j]*tmp;
         inverse[i][j] = inverse[i][j]-inverse[k][j]*tmp;
       }
+    }
+  }
+
+  return ierr;
+}
+
+int
+md_gen_test_vis_iso(md_t *md)
+{
+  int ierr = 0;
+
+  int nx = md->nx;
+  int nz = md->nz;
+  size_t siz_iz  = md->siz_iz;
+
+  float *lam2d = md->lambda;
+  float  *mu2d = md->mu;
+  float *rho2d = md->rho;
+  float *Qs = md->Qs;
+  float *Qp = md->Qp;
+
+  float Vp=3000.0;
+  float Vs=2000.0;
+  float rho=1500.0;
+  float mu = Vs*Vs*rho;
+  float lam = Vp*Vp*rho - 2.0*mu;
+
+  for (int k=0; k<nz; k++)
+  {
+    for (int i=0; i<nx; i++)
+    {
+      size_t iptr = i + k * siz_iz;
+      lam2d[iptr] = lam;
+       mu2d[iptr] = mu;
+      rho2d[iptr] = rho;
+      Qs[iptr] = 40;
+      Qp[iptr] = 80;
     }
   }
 

@@ -68,8 +68,8 @@ int main(int argc, char** argv)
   blk_init(blk, verbose);
 
   fd_t            *fd            = blk->fd    ;
-  gd_t            *gdcurv        = blk->gd;
-  gdcurv_metric_t *gdcurv_metric = blk->gdcurv_metric;
+  gd_t            *gd            = blk->gd;
+  gd_metric_t     *gd_metric     = blk->gd_metric;
   md_t            *md            = blk->md;
   wav_t           *wav           = blk->wav;
   src_t           *src           = blk->src;
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
   fd_set_macdrp(fd);
 
   // set gdinfo
-  gd_indx_set(gdcurv, 
+  gd_indx_set(gd, 
               par->number_of_total_grid_points_x,
               par->number_of_total_grid_points_z,
               fd->fdx_nghosts,
@@ -105,10 +105,10 @@ int main(int argc, char** argv)
   if (verbose>0) fprintf(stdout,"allocate grid vars ...\n"); 
 
   // malloc var in gdcurv
-  gd_curv_init(gdcurv);
+  gd_curv_init(gd);
 
-  // malloc var in gdcurv_metric
-  gd_curv_metric_init(gdcurv, gdcurv_metric);
+  // malloc var in gd_metric
+  gd_curv_metric_init(gd, gd_metric);
 
   // generate grid coord
   switch (par->grid_generation_itype)
@@ -123,20 +123,20 @@ int main(int argc, char** argv)
         float x0 = par->cartesian_grid_origin[0];
         float z0 = par->cartesian_grid_origin[1];
 
-        gd_curv_gen_cart(gdcurv,dx,x0,dz,z0);
+        gd_curv_gen_cart(gd,dx,x0,dz,z0);
 
         break;
 
     case PAR_GRID_IMPORT :
 
         fprintf(stdout,"import grid vars ...\n"); 
-        gd_curv_coord_import(gdcurv, par->grid_import_dir);
+        gd_curv_coord_import(gd, par->grid_import_dir);
 
         break;
   }
 
   // cal min/max of this thread
-  gd_curv_set_minmax(gdcurv);
+  gd_curv_set_minmax(gd);
 
   // generate topo over all the domain
   //ierr = gd_curv_topoall_generate();
@@ -145,7 +145,7 @@ int main(int argc, char** argv)
   if (par->is_export_grid==1)
   {
     fprintf(stdout,"export coord to file ...\n"); 
-    gd_curv_coord_export(gdcurv,
+    gd_curv_coord_export(gd,
                          blk->grid_export_dir);
   } else {
     fprintf(stdout,"do not export coord\n"); 
@@ -158,8 +158,8 @@ int main(int argc, char** argv)
     case PAR_METRIC_CALCULATE :
 
         if (verbose>0) fprintf(stdout,"calculate metrics ...\n"); 
-        gd_curv_metric_cal(gdcurv,
-                           gdcurv_metric,
+        gd_curv_metric_cal(gd,
+                           gd_metric,
                            fd->fdc_len,
                            fd->fdc_indx,
                            fd->fdc_coef);
@@ -169,7 +169,7 @@ int main(int argc, char** argv)
     case PAR_METRIC_IMPORT :
 
         if (verbose>0) fprintf(stdout,"import metric file ...\n"); 
-        gd_curv_metric_import(gdcurv, gdcurv_metric, par->grid_import_dir);
+        gd_curv_metric_import(gd, gd_metric, par->grid_import_dir);
 
         break;
   }
@@ -179,7 +179,7 @@ int main(int argc, char** argv)
   if (par->is_export_metric==1)
   {
     if (verbose>0) fprintf(stdout,"export metric to file ...\n"); 
-    gd_curv_metric_export(gdcurv,gdcurv_metric,
+    gd_curv_metric_export(gd,gd_metric,
                           blk->grid_export_dir);
   } else {
     if (verbose>0) fprintf(stdout,"do not export metric\n"); 
@@ -192,7 +192,7 @@ int main(int argc, char** argv)
 
   // allocate media vars
   if (verbose>0) {fprintf(stdout,"allocate media vars ...\n"); fflush(stdout);}
-  md_init(gdcurv, md, par->media_itype, par->visco_itype, par->nmaxwell);
+  md_init(gd, md, par->media_itype, par->visco_itype, par->nmaxwell);
 
   // read or discrete velocity model
   switch (par->media_input_itype)
@@ -217,12 +217,14 @@ int main(int argc, char** argv)
         md_gen_test_el_aniso(md);
       }
 
-      if (md->visco_type == CONST_VISCO_GRAVES_QS) {
-        md_gen_test_Qs(md, par->visco_Qs_freq);
+      if (md->medium_type == CONST_MEDIUM_VISCOELASTIC_ISO && 
+          md->visco_type == CONST_VISCO_GMB) {
+        md_gen_test_vis_iso(md);
       }
 
-      if(md->visco_type == CONST_VISCO_GMB) {
-        md_gen_test_GMB(md);
+      if (md->medium_type == CONST_MEDIUM_VISCOELASTIC_ISO && 
+          md->visco_type == CONST_VISCO_GRAVES) {
+        md_gen_test_Qs(md, par->visco_Qs_freq);
       }
 
       break;
@@ -230,7 +232,7 @@ int main(int argc, char** argv)
 
     case PAR_MEDIA_IMPORT : {
       if (verbose>0) fprintf(stdout,"import discrete medium file ...\n"); 
-      md_import(gdcurv, md, par->grid_import_dir);
+      md_import(gd, md, par->grid_import_dir);
 
       break;
     }
@@ -240,31 +242,31 @@ int main(int argc, char** argv)
 
       if (md->medium_type == CONST_MEDIUM_ELASTIC_ISO) {
           media_layer2model_el_iso(md->lambda, md->mu, md->rho,
-                  gdcurv->x2d, gdcurv->z2d,
-                  gdcurv->nx, gdcurv->nz, 
+                  gd->x2d, gd->z2d,
+                  gd->nx,  gd->nz, 
                   MEDIA_USE_CURV,
                   par->media_input_file,
                   par->equivalent_medium_method);
       } else if (md->medium_type == CONST_MEDIUM_ELASTIC_VTI) {
           media_layer2model_el_vti(md->rho,
                   md->c11, md->c33, md->c55, md->c13,
-                  gdcurv->x2d, gdcurv->z2d,
-                  gdcurv->nx, gdcurv->nz, 
+                  gd->x2d, gd->z2d,
+                  gd->nx,  gd->nz, 
                   MEDIA_USE_CURV,
                   par->media_input_file,
                   par->equivalent_medium_method);
       } else if (md->medium_type == CONST_MEDIUM_ELASTIC_ANISO) {
           media_layer2model_el_aniso(md->rho,
                   md->c11, md->c13, md->c15, md->c33, md->c35, md->c55,
-                  gdcurv->x2d, gdcurv->z2d,
-                  gdcurv->nx, gdcurv->nz, 
+                  gd->x2d, gd->z2d,
+                  gd->nx,  gd->nz, 
                   MEDIA_USE_CURV,
                   par->media_input_file,
                   par->equivalent_medium_method);
       } else if (md->medium_type == CONST_MEDIUM_ACOUSTIC_ISO) {
           media_layer2model_ac_iso(md->rho, md->kappa,
-                  gdcurv->x2d, gdcurv->z2d,
-                  gdcurv->nx, gdcurv->nz, 
+                  gd->x2d, gd->z2d,
+                  gd->nx,  gd->nz, 
                   MEDIA_USE_CURV,
                   par->media_input_file,
                   par->equivalent_medium_method);
@@ -278,35 +280,35 @@ int main(int argc, char** argv)
 
       if (md->medium_type == CONST_MEDIUM_ELASTIC_ISO) {
           media_grid2model_el_iso(md->rho, md->lambda, md->mu,
-                  gdcurv->x2d, gdcurv->z2d,
-                  gdcurv->nx, gdcurv->nz, 
-                  gdcurv->xmin, gdcurv->xmax, 
+                  gd->x2d,  gd->z2d,
+                  gd->nx,   gd->nz, 
+                  gd->xmin, gd->xmax, 
                   MEDIA_USE_CURV,
                   par->media_input_file,
                   par->equivalent_medium_method);
       } else if (md->medium_type == CONST_MEDIUM_ELASTIC_VTI) {
           media_grid2model_el_vti(md->rho,
                   md->c11, md->c33, md->c55, md->c13,
-                  gdcurv->x2d, gdcurv->z2d,
-                  gdcurv->nx, gdcurv->nz, 
-                  gdcurv->xmin, gdcurv->xmax, 
+                  gd->x2d,  gd->z2d,
+                  gd->nx,   gd->nz, 
+                  gd->xmin, gd->xmax, 
                   MEDIA_USE_CURV,
                   par->media_input_file,
                   par->equivalent_medium_method);
       } else if (md->medium_type == CONST_MEDIUM_ELASTIC_ANISO) {
           media_grid2model_el_aniso(md->rho,
                   md->c11, md->c13, md->c15, md->c33, md->c35, md->c55,
-                  gdcurv->x2d, gdcurv->z2d,
-                  gdcurv->nx, gdcurv->nz, 
-                  gdcurv->xmin, gdcurv->xmax, 
+                  gd->x2d,  gd->z2d,
+                  gd->nx,   gd->nz, 
+                  gd->xmin, gd->xmax, 
                   MEDIA_USE_CURV,
                   par->media_input_file,
                   par->equivalent_medium_method);
       } else if (md->medium_type == CONST_MEDIUM_ACOUSTIC_ISO) {
           media_grid2model_ac_iso(md->rho, md->kappa,
-                  gdcurv->x2d, gdcurv->z2d,
-                  gdcurv->nx, gdcurv->nz, 
-                  gdcurv->xmin, gdcurv->xmax, 
+                  gd->x2d,  gd->z2d,
+                  gd->nx,   gd->nz, 
+                  gd->xmin, gd->xmax, 
                   MEDIA_USE_CURV,
                   par->media_input_file,
                   par->equivalent_medium_method);
@@ -325,7 +327,7 @@ int main(int argc, char** argv)
   {
     if (verbose>0) fprintf(stdout,"export discrete medium to file ...\n"); 
 
-    md_export(gdcurv, md, blk->media_export_dir);
+    md_export(gd, md, blk->media_export_dir);
   } else {
     if (verbose>0) fprintf(stdout,"do not export medium\n"); 
   }
@@ -345,7 +347,7 @@ int main(int argc, char** argv)
 
     //-- estimate time step
     fprintf(stdout,"   estimate time step ...\n"); 
-    blk_dt_esti_curv(gdcurv,md,fd->CFL,
+    blk_dt_esti_curv(gd,md,fd->CFL,
             &dtmax, &dtmaxVp, &dtmaxL, &dtmaxi, &dtmaxk);
     
     //-- print for QC
@@ -378,7 +380,7 @@ int main(int argc, char** argv)
 //-- source import or locate on fly
 //-------------------------------------------------------------------------------
 
-  src_read_locate_file(gdcurv, src,
+  src_read_locate_file(gd, src,
                        par->source_input_file,
                        t0, dt,
                        fd->num_rk_stages, fd->rk_rhs_time,
@@ -399,10 +401,10 @@ int main(int argc, char** argv)
   if (verbose>0) fprintf(stdout,"allocate solver vars ...\n"); 
   if (md->medium_type == CONST_MEDIUM_ACOUSTIC_ISO)
   {
-    wav_ac_init(gdcurv, wav, fd->num_rk_stages);
+    wav_ac_init(gd, wav, fd->num_rk_stages);
   } else
   {
-    wav_init(gdcurv, wav, fd->num_rk_stages, par->visco_itype, par->nmaxwell);
+    wav_init(gd, wav, fd->num_rk_stages, par->visco_itype, par->nmaxwell);
   }
 
 //-------------------------------------------------------------------------------
@@ -412,11 +414,11 @@ int main(int argc, char** argv)
   if (verbose>0) fprintf(stdout,"setup output info ...\n"); 
 
   // receiver: need to do
-  io_recv_read_locate(gdcurv, iorecv,
+  io_recv_read_locate(gd, iorecv,
                       nt_total, wav->ncmp, par->in_station_file);
 
   // line
-  io_line_locate(gdcurv, ioline,
+  io_line_locate(gd, ioline,
                  wav->ncmp,
                  nt_total,
                  par->number_of_receiver_line,
@@ -426,7 +428,7 @@ int main(int argc, char** argv)
                  par->receiver_line_name);
   
   // snapshot
-  io_snapshot_locate(gdcurv, iosnap,
+  io_snapshot_locate(gd, iosnap,
                      par->number_of_snapshot,
                      par->snapshot_name,
                      par->snapshot_index_start,
@@ -445,7 +447,7 @@ int main(int argc, char** argv)
 
   if (verbose>0) fprintf(stdout,"setup boundary ...\n"); 
 
-  bdry_init(bdry, gdcurv->nx, gdcurv->nz);
+  bdry_init(bdry, gd->nx, gd->nz);
 
   //-- ade cfs-pml
   
@@ -453,7 +455,7 @@ int main(int argc, char** argv)
   {
     if (verbose>0) fprintf(stdout,"setup ade cfs-pml ...\n"); 
 
-    bdry_pml_set(gdcurv, wav, bdry,
+    bdry_pml_set(gd, wav, bdry,
                  par->cfspml_is_sides,
                  par->abs_num_of_layers,
                  par->cfspml_alpha_max,
@@ -468,7 +470,7 @@ int main(int argc, char** argv)
   {
     if (verbose>0) fprintf(stdout,"setup sponge layer ...\n"); 
 
-    bdry_ablexp_set(gdcurv, wav, bdry,
+    bdry_ablexp_set(gd, wav, bdry,
                     par->ablexp_is_sides,
                     par->abs_num_of_layers,
                     par->ablexp_velocity,
@@ -482,7 +484,7 @@ int main(int argc, char** argv)
   {
     if (verbose>0) fprintf(stdout,"cal free surface matrix ...\n"); 
 
-    bdry_free_set(gdcurv, bdry, par->free_is_sides, par->visco_itype, verbose);
+    bdry_free_set(gd, bdry, par->free_is_sides, par->visco_itype, verbose);
   }
 
 //-------------------------------------------------------------------------------
@@ -493,7 +495,7 @@ int main(int argc, char** argv)
 
   blk_print(blk);
 
-  gd_print(gdcurv);
+  gd_print(gd);
 
   iosnap_print(iosnap);
 
@@ -508,7 +510,7 @@ int main(int argc, char** argv)
   
   time_t t_start = time(NULL);
   
-  drv_rk_curv_col_allstep(fd,gdcurv,gdcurv_metric,md,
+  drv_rk_curv_col_allstep(fd,gd,gd_metric,md,
                           src,bdry,
                           wav, 
                           iorecv,ioline,iosnap,
