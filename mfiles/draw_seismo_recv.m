@@ -4,14 +4,14 @@ clc;
 addmypath;
 % -------------------------- parameters input -------------------------- %
 % file and path name
-parfnm='../project/test.json';
-output_dir='../project/output';
+parfnm='../project2/test.json';
+output_dir='../project2/output';
 
 % which variable to plot
 varnm='Vz';
 % which station to plot (start from index '1')
-startid=1;
-endid = 1;
+startid=4;
+endid = 4;
 
 % figure control parameters
 flag_print=0;

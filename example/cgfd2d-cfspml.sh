@@ -6,7 +6,7 @@ set -e
 date
 
 #-- program related dir
-EXEC_WAVE=`pwd`/../main_curv_col_2d
+EXEC_WAVE=`pwd`/../main
 echo "EXEC_WAVE=$EXEC_WAVE"
 
 #-- input dir
@@ -28,8 +28,14 @@ mkdir -p $OUTPUT_DIR
 mkdir -p $GRID_DIR
 mkdir -p $MEDIA_DIR
 
-NX=197
-NZ=201
+#----------------------------------------------------------------------
+#-- grid and mpi configurations
+#----------------------------------------------------------------------
+
+#-- total x grid points
+NX=801
+#-- total z grid points
+NZ=401
 #----------------------------------------------------------------------
 #-- create main conf
 #----------------------------------------------------------------------
@@ -38,14 +44,14 @@ cat << ieof > $PAR_FILE
   "number_of_total_grid_points_x" : ${NX},
   "number_of_total_grid_points_z" : ${NZ},
 
-  "size_of_time_step" : 0.001,
-  "number_of_time_steps" : 10000,
-  "#time_window_length" : 2,
+  "#size_of_time_step" : 0.001,
+  "#number_of_time_steps" : 12000,
+  "time_window_length" : 0.7,
   "check_stability" : 1,
 
   "boundary_x_left" : {
       "cfspml" : {
-          "number_of_layers" : 10,
+          "number_of_layers" : 20,
           "alpha_max" : 3.14,
           "beta_max" : 2.0,
           "ref_vel"  : 5000.0
@@ -53,7 +59,7 @@ cat << ieof > $PAR_FILE
       },
   "boundary_x_right" : {
       "cfspml" : {
-          "number_of_layers" : 10,
+          "number_of_layers" : 20,
           "alpha_max" : 3.14,
           "beta_max" : 2.0,
           "ref_vel"  : 5000.0
@@ -61,7 +67,7 @@ cat << ieof > $PAR_FILE
       },
   "boundary_z_bottom" : {
       "cfspml" : {
-          "number_of_layers" : 10,
+          "number_of_layers" : 20,
           "alpha_max" : 3.14,
           "beta_max" : 2.0,
           "ref_vel"  : 5000.0
@@ -72,10 +78,10 @@ cat << ieof > $PAR_FILE
       },
 
   "grid_generation_method" : {
-      "import" : "$INPUTDIR/grid_model1",
+      "import" : "$INPUTDIR/grid1",
       "#cartesian" : {
-         "origin"  : [0.0, -29900.0 ],
-         "inteval" : [ 100.0, 100.0 ]
+         "origin"  : [0.0, -2990.0 ],
+         "inteval" : [ 10.0, 10.0 ]
       }
   },
   "is_export_grid" : 1,
@@ -88,7 +94,7 @@ cat << ieof > $PAR_FILE
   "is_export_metric" : 1,
 
   "medium" : {
-      "type" : "elastic_vti",
+      "type" : "elastic_iso",
       "#input_way" : "infile_layer",
       "#input_way" : "binfile",
       "input_way" : "code",
@@ -172,10 +178,9 @@ cat << ieof > ${PROJDIR}/cgfd_sim.sh
 #!/bin/bash
 
 set -e
-printf "\nUse $NUMPROCS CPUs on following nodes:\n"
 
 printf "\nStart simualtion ...\n";
-time $EXEC_WAVE $PAR_FILE 100 2>&1 |tee log2
+time $EXEC_WAVE $PAR_FILE 100  2>&1 |tee log1
 if [ $? -ne 0 ]; then
     printf "\nSimulation fail! stop!\n"
     exit 1
@@ -196,4 +201,4 @@ fi
 
 date
 
-# vim:ft=conf:ts=4:sw=4:nu:et:ai:
+# vim:ts=4:sw=4:nu:et:ai:
