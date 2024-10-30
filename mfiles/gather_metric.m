@@ -7,10 +7,10 @@ if ~ exist(fnm_metric,'file')
    error([mfilename ': file ' fnm_metric 'does not exist']);
 end
 
-xs = subs(1) - 1; 
-zs = subs(2) - 1; 
+xs = subs(1); 
+zs = subs(2); 
 
-xzc = nc_attget(fnm_metric,nc_global,'count_of_physical_points');
+xzc = ncreadatt(fnm_metric,'/','count_of_physical_points');
 xzc = double(xzc);
 
 if(subc(1) == -1)
@@ -32,6 +32,6 @@ i2 = i1 + xc - 1;
 k1 = 1;
 k2 = k1 + zc - 1;
 
-v(k1:k2,i1:i2)=nc_varget(fnm_metric,varnm,[zs,xs],[zc,xc],[zt,xt]);
+v(i1:i2,k1:k2)=ncread(fnm_metric,varnm,[xs,zs],[xc,zc],[xt,zt]);
 
 end

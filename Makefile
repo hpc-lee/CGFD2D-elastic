@@ -77,7 +77,7 @@ cleanexe:
 	rm -f main
 
 cleanobj:
-	rm -f $(DIR_OBJ)/*.o
+	rm -rf $(DIR_OBJ)
 cleanall: cleanexe cleanobj
 	echo "clean all"
 distclean: cleanexe cleanobj

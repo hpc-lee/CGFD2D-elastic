@@ -10,30 +10,31 @@ output_dir='../project/output'
 % which grid profile to plot
 subs=[1,1];     % start from index '1'
 subc=[-1,-1];   % '-1' to plot all points in this dimension
-subt=[1,1];
+subt=[3,3];
 
 % which snapshot to plot
 id=1;
 
 % variable and time to plot
-varnm='Vx';
-ns=100;
-ne=2400;
-nt=100;
+varnm='Vz';
+ns=1;
+ne=31;
+nt=1;
 
-% scl_caxis=[-50.0 50.0];
+% scl_caxis=[-5.0 5.0]*1e-4;
 % read parameters file
-par=loadjson(parfnm);
-snap_subs=par.snapshot{1}.grid_index_start;
-snap_subc=par.snapshot{1}.grid_index_count;
-snap_subt=par.snapshot{1}.grid_index_incre;
+jsontext=fileread(parfnm);
+par=jsondecode(jsontext);
+snap_subs=par.snapshot(1).grid_index_start;
+snap_subc=par.snapshot(1).grid_index_count;
+snap_subt=par.snapshot(1).grid_index_incre;
 snap_subs = double(snap_subs);
 snap_subc = double(snap_subc);
 snap_subt = double(snap_subt);
 
 % get grid info
-subs1(1) = snap_subs(1) + subs(1);
-subs1(2) = snap_subs(2) + subs(2);
+subs1(1) = snap_subs(1) + subs(1)-1;
+subs1(2) = snap_subs(2) + subs(2)-1;
 subt1(1) = snap_subt(1) * subt(1); %stride
 subt1(2) = snap_subt(2) * subt(2);
 
@@ -53,12 +54,12 @@ end
 flag_km     = 1;
 flag_emlast = 1;
 flag_print  = 0;
-savegif = 0;
+savegif = 1;
 
 
-filename1 = ['Vz2.gif'];
+filename1 = ['Vz.gif'];
 scl_daspect =[1 1 1];
-clrmp       = 'jetwr';
+clrmp       = 'jet';
 taut=0.5;
 %-----------------------------------------------------------
 %-- load coord
@@ -95,8 +96,7 @@ for nlayer=ns:nt:ne
 
     % axis image
     % shading
-    % shading interp;
-    shading flat;
+    shading interp;
     % colorbar range/scale
     if exist('scl_caxis')
         caxis(scl_caxis);

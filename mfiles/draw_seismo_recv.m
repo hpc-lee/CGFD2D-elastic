@@ -4,14 +4,14 @@ clc;
 addmypath;
 % -------------------------- parameters input -------------------------- %
 % file and path name
-parfnm='../project2/test.json';
-output_dir='../project2/output';
+parfnm='../project/test.json';
+output_dir='../project/output';
 
 % which variable to plot
-varnm='Vz';
+varnm='Vx';
 % which station to plot (start from index '1')
-startid=4;
-endid = 4;
+startid=1;
+endid = 7;
 
 % figure control parameters
 flag_print=0;
@@ -19,7 +19,8 @@ flag_print=0;
 % ---------------------------------------------------------------------- %
 
 % read parameter file
-par=loadjson(parfnm);
+jsontext=fileread(parfnm);
+par=jsondecode(jsontext);
 
 fileID = fopen(par.in_source_file);
 recvprefix = fgetl(fileID);
@@ -30,8 +31,6 @@ while(recvprefix(1) == "#")
     end
 end
 fclose(fileID);
-
-
 
 fileID = fopen(par.in_station_file);
 %first line is number recv or station
@@ -52,13 +51,14 @@ for irec=startid:1:endid
     recvnm = char(recvinfo(1));
     sacnm=[output_dir,'/',recvprefix,'.',recvnm,'.',varnm,'.sac'];
     sacdata=rsac(sacnm);
-    seismodata(irec-startid+1,:)=sacdata(:,2);
-    seismot(irec-startid+1,:)=sacdata(:,1);
+    seismodata(:,irec-startid+1)=sacdata(:,2)/max(abs(sacdata(:,2)));
+%     seismodata(:,irec-startid+1)=sacdata(:,2);
+    seismot(:,irec-startid+1)=sacdata(:,1);
 end
 % plot receiver
 for irec=startid:1:endid
     figure(irec-startid+1)
-    plot(seismot(irec-startid+1,:),seismodata(irec-startid+1,:),'b','linewidth',1.0);
+    plot(seismot(:,irec-startid+1),seismodata(:,irec-startid+1),'b','linewidth',1.0);
     xlabel('Time (s)');
     ylabel('Amplitude');
     title([varnm, ' recv No.',num2str(irec),' interpreter ','yes']);
@@ -74,3 +74,13 @@ for irec=startid:1:endid
         print(gcf,[varnm,'_rec_no',num2str(irec),'.png'],'-dpng');
     end
 end
+
+seismodata1 = seismodata;
+seismot1 = seismot;
+save('seismodata1.mat','seismodata1');
+save('seismot1.mat','seismot1');
+
+% seismodata2 = seismodata;
+% seismot2 = seismot;
+% save seismodata2.mat;
+% save seismot2.mat;
