@@ -29,7 +29,6 @@ drv_rk_curv_col_allstep(
   float dt, int nt_total, float t0,
   char *output_dir,
   int qc_check_nan_num_of_step,
-  const int output_all, // qc all var
-  const int verbose);
+  const int output_all);
 
 #endif

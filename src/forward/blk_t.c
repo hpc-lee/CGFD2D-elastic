@@ -16,7 +16,7 @@
 //
 
 int
-blk_init(blk_t *blk, const int verbose)
+blk_init(blk_t *blk)
 {
   int ierr = 0;
 
@@ -42,8 +42,7 @@ int
 blk_set_output(blk_t *blk,
                char *output_dir,
                char *grid_export_dir,
-               char *media_export_dir,
-               const int verbose)
+               char *media_export_dir)
 {
   // set name
   //sprintf(blk->name, "%s", name);

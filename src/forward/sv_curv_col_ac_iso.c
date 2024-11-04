@@ -28,8 +28,7 @@ sv_curv_col_ac_iso_onestage(
             // include different order/stentil
             int num_of_fdx_op, fd_op_t *fdx_op,
             int num_of_fdz_op, fd_op_t *fdz_op,
-            int fdz_max_len, 
-            const int verbose)
+            int fdz_max_len) 
 {
   // local pointer get each vars
   float *restrict Vx    = w_cur + wav->Vx_pos ;
@@ -84,8 +83,7 @@ sv_curv_col_ac_iso_onestage(
     // imaging
     sv_curv_col_ac_iso_rhs_timg_z2(P,
                                    ni1,ni2,nk1,nk2,nz,
-                                   siz_iz,
-                                   verbose);
+                                   siz_iz);
   }
 
   // inner points
@@ -95,8 +93,7 @@ sv_curv_col_ac_iso_onestage(
                                kappa2d, slw2d,
                                ni1,ni2,nk1,nk2,siz_iz,
                                fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
-                               fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
-                               verbose);
+                               fdz_inn_len, fdz_inn_indx, fdz_inn_coef);
 
   // free, abs, source in turn
 
@@ -109,8 +106,7 @@ sv_curv_col_ac_iso_onestage(
                                    kappa2d, slw2d,
                                    ni1,ni2,nk1,nk2,siz_iz,
                                    fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
-                                   num_of_fdz_op,fdz_op,fdz_max_len,
-                                   verbose);
+                                   num_of_fdz_op,fdz_op,fdz_max_len);
   }
 
   // cfs-pml, loop face inside
@@ -123,8 +119,7 @@ sv_curv_col_ac_iso_onestage(
                                   nk2, siz_iz,
                                   fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
                                   fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
-                                  bdry,
-                                  verbose);
+                                  bdry);
     
   }
 
@@ -133,8 +128,7 @@ sv_curv_col_ac_iso_onestage(
   {
     sv_curv_col_ac_iso_rhs_src(hVx,hVz,hP,
                                jac2d, slw2d, 
-                               src,
-                               verbose);
+                               src);
   }
   // end func
 
@@ -157,8 +151,7 @@ sv_curv_col_ac_iso_rhs_inner(
               int ni1, int ni2, int nk1, int nk2,
               size_t siz_iz,
               int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
-              int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef,
-              const int verbose)
+              int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef)
 {
   // use local stack array for speedup
   float  lfdx_coef [fdx_len];
@@ -253,8 +246,7 @@ int
 sv_curv_col_ac_iso_rhs_timg_z2(
                float *restrict  P,
                int ni1, int ni2, int nk1, int nk2, int nz,
-               size_t siz_iz,
-               const int verbose)
+               size_t siz_iz)
 {
   // nk2
   size_t iptr_k = nk2 * siz_iz;
@@ -297,8 +289,7 @@ sv_curv_col_ac_iso_rhs_vlow_z2(
                int ni1, int ni2, int nk1, int nk2,
                size_t siz_iz,
                int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
-               int num_of_fdz_op, fd_op_t *fdz_op, int fdz_max_len,
-               const int verbose)
+               int num_of_fdz_op, fd_op_t *fdz_op, int fdz_max_len)
 {
   // use local stack array for speedup
   float  lfdx_coef [fdx_len];
@@ -404,8 +395,7 @@ sv_curv_col_ac_iso_rhs_cfspml(
                int nk2, size_t siz_iz,
                int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
                int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef,
-               bdry_t *bdry,
-               const int verbose)
+               bdry_t *bdry)
 {
   // loop var for fd
   int n_fd; // loop var for fd
@@ -594,8 +584,7 @@ sv_curv_col_ac_iso_rhs_src(
              float *restrict hVx , float *restrict hVz ,
              float *restrict hP, 
              float *restrict jac2d, float *restrict slw2d,
-             src_t *src, // short nation for reference member
-             const int verbose)
+             src_t *src)
 {
   int ierr = 0;
 

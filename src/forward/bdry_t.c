@@ -42,8 +42,7 @@ int
 bdry_free_set(gd_t    *gd,
               bdry_t      *bdryfree,
               int   in_is_sides[][2],
-              int visco_type,
-              const int verbose)
+              int visco_type)
 {
   int ierr = 0;
 
@@ -101,8 +100,7 @@ bdry_pml_set(gd_t     *gd,
              int   in_num_layers[][2],
              float in_alpha_max[][2], //
              float in_beta_max[][2], //
-             float in_velocity[][2], //
-             int verbose)
+             float in_velocity[][2])
 {
   int    ni1 = gd->ni1;
   int    ni2 = gd->ni2;
@@ -239,7 +237,7 @@ bdry_pml_set(gd_t     *gd,
       int nz = (bdrypml->nk2[idim][iside] - bdrypml->nk1[idim][iside] + 1);
 
       bdry_pml_auxvar_init(nx,nz,wav,
-                           &(bdrypml->auxvar[idim][iside]),verbose);
+                           &(bdrypml->auxvar[idim][iside]));
     } // iside
   } // idim
 
@@ -289,8 +287,7 @@ bdry_pml_cal_b(float x, float L, float bmax)
 int
 bdry_pml_auxvar_init(int nx, int nz, 
                      wav_t *wav,
-                     bdrypml_auxvar_t *auxvar,
-                     const int verbose)
+                     bdrypml_auxvar_t *auxvar)
 {
   auxvar->nx   = nx;
   auxvar->nz   = nz;
@@ -423,8 +420,7 @@ bdry_ablexp_set(gd_t *gd,
                 int   in_is_sides[][2],
                 int   in_num_layers[][2],
                 float in_velocity[][2], //
-                float dt,
-                int verbose)
+                float dt)
 {
   int    ierr = 0;
 

@@ -10,7 +10,7 @@
  */
 
 int
-par_read_from_file(char *par_fname,  par_t *par, int verbose)
+par_read_from_file(char *par_fname,  par_t *par)
 {
   //
   // read whole file inot str

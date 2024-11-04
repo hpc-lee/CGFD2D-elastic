@@ -91,8 +91,7 @@ src_read_locate_file(gd_t     *gd,
                      float     dt,
                      int       max_stage,
                      float    *rk_stage_time,
-                     int       npoint_half_ext,
-                     int       verbose)
+                     int       npoint_half_ext)
 {
   int ierr = 0;
 
@@ -224,7 +223,7 @@ src_read_locate_file(gd_t     *gd,
         all_inc  [is][1] = sz_inc;
 
         //-- to notice user the progress using screen output for large input
-        if ((is % 1000 ==0) && verbose>99) {
+        if (is % 1000 ==0) {
           fprintf(stdout,"-- loc %d-th src index, finish %2.0f%%\n",
                       is, (float)(is+1)/in_num_source*100.0);
           fflush(stdout);
@@ -263,30 +262,26 @@ src_read_locate_file(gd_t     *gd,
   } // is loop
 
   // print for QC
-  if (verbose > 99) {
-    fprintf(stdout,"src located results:\n");
-    for (int is=0; is < in_num_source; is++)
-    {
-      fprintf(stdout,"-- %d: indx=(%d,%d), inc=(%f,%f)\n",
-                    is, all_index[is][0],all_index[is][1],
-                        all_inc[is][0],all_inc[is][1]);
-    }
-    fflush(stdout);
+  fprintf(stdout,"src located results:\n");
+  for (int is=0; is < in_num_source; is++)
+  {
+    fprintf(stdout,"-- %d: indx=(%d,%d), inc=(%f,%f)\n",
+                  is, all_index[is][0],all_index[is][1],
+                      all_inc[is][0],all_inc[is][1]);
   }
+  fflush(stdout);
 
-  if (verbose > 1) {
-    for (int is=0; is < in_num_source; is++)
+  for (int is=0; is < in_num_source; is++)
+  {
+    if(all_in_thread[is] == 0)
     {
-      if(all_in_thread[is] == 0)
-      {
-        fprintf(stdout,"#########         ########\n");
-        fprintf(stdout,"######### Warning ########\n");
-        fprintf(stdout,"#########         ########\n");
-        fprintf(stdout,"source number %d physical coordinates are outside calculation area !\n",is);
-      }
+      fprintf(stdout,"#########         ########\n");
+      fprintf(stdout,"######### Warning ########\n");
+      fprintf(stdout,"#########         ########\n");
+      fprintf(stdout,"source number %d physical coordinates are outside calculation area !\n",is);
     }
-    fflush(stdout);
   }
+  fflush(stdout);
 
   //
   // alloc src_t struct for this thread

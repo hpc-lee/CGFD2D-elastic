@@ -62,8 +62,7 @@ src_read_locate_file(gd_t     *gd,
                      float     dt,
                      int       max_stage,
                      float    *rk_stage_time,
-                     int       npoint_half_ext,
-                     int       verbose);
+                     int       npoint_half_ext);
 
 float
 src_cal_wavelet(float t, char *wavelet_name, float *wavelet_coefs);

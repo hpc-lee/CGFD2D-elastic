@@ -125,13 +125,13 @@ cat << ieof > $PAR_FILE
       "Qs_freq" : 1.0
   },
 
-  "in_source_file" : "$INPUTDIR/prep_source/test_source.src",
+  "in_source_file" : "$INPUTDIR/test_source.src",
   "is_export_source" : 1,
   "source_export_dir"  : "$SOURCE_DIR",
 
   "output_dir" : "$OUTPUT_DIR",
 
-  "in_station_file" : "$INPUTDIR/prep_station/station.list",
+  "in_station_file" : "$INPUTDIR/station.list",
 
   "#receiver_line" : [
     {
@@ -180,7 +180,7 @@ cat << ieof > ${PROJDIR}/cgfd_sim.sh
 set -e
 
 printf "\nStart simualtion ...\n";
-time $EXEC_WAVE $PAR_FILE 100  2>&1 |tee log1
+time $EXEC_WAVE $PAR_FILE 2>&1 |tee log1
 if [ $? -ne 0 ]; then
     printf "\nSimulation fail! stop!\n"
     exit 1

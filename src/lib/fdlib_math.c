@@ -217,6 +217,9 @@ fdlib_math_isPoint2InQuad(float px, float py, const float *vertx, const float *v
     vx[1] = vertx[1]; vy[1] = verty[1];
     vx[2] = vertx[3]; vy[2] = verty[3];
     vx[3] = vertx[2]; vy[3] = verty[2];
+    float cross[4];
+    float sum1=0.0;
+    float sum2=0.0;
 
     for (int i = 0; i < 4; i++) {
         // vector: edge
@@ -226,14 +229,15 @@ fdlib_math_isPoint2InQuad(float px, float py, const float *vertx, const float *v
         float vectp_x = px - vx[i];
         float vectp_y = py - vy[i];
 
-        float sign = vecte_x*vectp_y - vecte_y*vectp_x;
-        sign /= (sqrt(vecte_x*vecte_x + vecte_y*vecte_y));
-        // normalization
-        
-        if (sign < -1e-6)
-            return 0;
+        cross[i] = vecte_x*vectp_y - vecte_y*vectp_x;
+        sum1 += cross[i];
+        sum2 += fabs(cross[i]);
     }
 
-    return 1;
+    if(fabs(sum1)-sum2>1e-6)
+    {
+      return 0;
+    }else{
+      return 1;
+    }
 }
-

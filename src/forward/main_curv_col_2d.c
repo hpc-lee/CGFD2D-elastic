@@ -23,7 +23,6 @@
 
 int main(int argc, char** argv)
 {
-  int verbose = 1; // default fprint
   char *par_fname;
   char err_message[CONST_MAX_STRLEN];
 
@@ -33,39 +32,32 @@ int main(int argc, char** argv)
 
   // argc checking
   if (argc < 2) {
-    fprintf(stdout,"usage: main_curv_col_el_2d <par_file> <opt: verbose>\n");
+    fprintf(stdout,"usage: main_curv_col_el_2d <par_file> \n");
     exit(1);
   }
 
-  //strncpy(par_fname, argv[1], sizeof(argv[1]));
   par_fname = argv[1];
-
-  if (argc >= 3) {
-    verbose = atoi(argv[2]); // verbose number
-    fprintf(stdout,"verbose=%d\n", verbose); fflush(stdout);
-  }
-
   fprintf(stdout,"par file =  %s\n", par_fname); fflush(stdout);
 
   // read par
 
   par_t *par = (par_t *) malloc(sizeof(par_t));
 
-  par_read_from_file(par_fname, par, verbose);
+  par_read_from_file(par_fname, par);
 
-  if (verbose>0) par_print(par);
+  par_print(par);
 
 //-------------------------------------------------------------------------------
 // init blk_t
 //-------------------------------------------------------------------------------
 
-  if (verbose>0) fprintf(stdout,"create blk ...\n"); 
+  fprintf(stdout,"create blk ...\n"); 
 
   // malloc blk
   blk_t *blk = (blk_t *) malloc(sizeof(blk_t));
 
   // malloc inner vars
-  blk_init(blk, verbose);
+  blk_init(blk);
 
   fd_t            *fd            = blk->fd    ;
   gd_t            *gd            = blk->gd;
@@ -80,7 +72,7 @@ int main(int argc, char** argv)
 
   // set up fd_t
   //    not support selection scheme by par file yet
-  if (verbose>0) fprintf(stdout,"set scheme ...\n"); 
+  fprintf(stdout,"set scheme ...\n"); 
   fd_set_macdrp(fd);
 
   // set gdinfo
@@ -88,21 +80,19 @@ int main(int argc, char** argv)
               par->number_of_total_grid_points_x,
               par->number_of_total_grid_points_z,
               fd->fdx_nghosts,
-              fd->fdz_nghosts,
-              verbose);
+              fd->fdz_nghosts);
 
   // set str in blk
   blk_set_output(blk, 
                  par->output_dir,
                  par->grid_export_dir,
-                 par->media_export_dir,
-                 verbose);
+                 par->media_export_dir);
 
 //-------------------------------------------------------------------------------
 //-- grid generation or import
 //-------------------------------------------------------------------------------
 
-  if (verbose>0) fprintf(stdout,"allocate grid vars ...\n"); 
+  fprintf(stdout,"allocate grid vars ...\n"); 
 
   // malloc var in gdcurv
   gd_curv_init(gd);
@@ -157,7 +147,7 @@ int main(int argc, char** argv)
   {
     case PAR_METRIC_CALCULATE :
 
-        if (verbose>0) fprintf(stdout,"calculate metrics ...\n"); 
+        fprintf(stdout,"calculate metrics ...\n"); 
         gd_curv_metric_cal(gd,
                            gd_metric,
                            fd->fdc_len,
@@ -168,30 +158,30 @@ int main(int argc, char** argv)
 
     case PAR_METRIC_IMPORT :
 
-        if (verbose>0) fprintf(stdout,"import metric file ...\n"); 
+        fprintf(stdout,"import metric file ...\n"); 
         gd_curv_metric_import(gd, gd_metric, par->grid_import_dir);
 
         break;
   }
-  if (verbose>0) { fprintf(stdout, " --> done\n"); fflush(stdout); }
+  fprintf(stdout, " --> done\n"); fflush(stdout);
 
   // export metric
   if (par->is_export_metric==1)
   {
-    if (verbose>0) fprintf(stdout,"export metric to file ...\n"); 
+    fprintf(stdout,"export metric to file ...\n"); 
     gd_curv_metric_export(gd,gd_metric,
                           blk->grid_export_dir);
   } else {
-    if (verbose>0) fprintf(stdout,"do not export metric\n"); 
+    fprintf(stdout,"do not export metric\n"); 
   }
-  if (verbose>0) { fprintf(stdout, " --> done\n"); fflush(stdout); }
+  fprintf(stdout, " --> done\n"); fflush(stdout);
 
 //-------------------------------------------------------------------------------
 //-- media generation or import
 //-------------------------------------------------------------------------------
 
   // allocate media vars
-  if (verbose>0) {fprintf(stdout,"allocate media vars ...\n"); fflush(stdout);}
+  fprintf(stdout,"allocate media vars ...\n"); fflush(stdout);
   md_init(gd, md, par->media_itype, par->visco_itype, par->nmaxwell);
 
   // read or discrete velocity model
@@ -199,7 +189,7 @@ int main(int argc, char** argv)
   {
     case PAR_MEDIA_CODE : {
 
-      if (verbose>0) fprintf(stdout,"generate simple medium in code ...\n"); 
+      fprintf(stdout,"generate simple medium in code ...\n"); 
 
       if (md->medium_type == CONST_MEDIUM_ACOUSTIC_ISO) {
         md_gen_test_ac_iso(md);
@@ -231,14 +221,14 @@ int main(int argc, char** argv)
     }
 
     case PAR_MEDIA_IMPORT : {
-      if (verbose>0) fprintf(stdout,"import discrete medium file ...\n"); 
+      fprintf(stdout,"import discrete medium file ...\n"); 
       md_import(gd, md, par->grid_import_dir);
 
       break;
     }
 
     case PAR_MEDIA_2LAY : {
-      if (verbose>0) fprintf(stdout,"read and discretize layer medium file ...\n"); 
+      fprintf(stdout,"read and discretize layer medium file ...\n"); 
 
       if (md->medium_type == CONST_MEDIUM_ELASTIC_ISO) {
           media_layer2model_el_iso(md->lambda, md->mu, md->rho,
@@ -276,7 +266,7 @@ int main(int argc, char** argv)
     }
 
     case PAR_MEDIA_2GRD : {
-      if (verbose>0) fprintf(stdout,"read and descretize grid medium file ...\n"); 
+      fprintf(stdout,"read and descretize grid medium file ...\n"); 
 
       if (md->medium_type == CONST_MEDIUM_ELASTIC_ISO) {
           media_grid2model_el_iso(md->rho, md->lambda, md->mu,
@@ -325,11 +315,11 @@ int main(int argc, char** argv)
   // export grid media
   if (par->is_export_media==1)
   {
-    if (verbose>0) fprintf(stdout,"export discrete medium to file ...\n"); 
+    fprintf(stdout,"export discrete medium to file ...\n"); 
 
     md_export(gd, md, blk->media_export_dir);
   } else {
-    if (verbose>0) fprintf(stdout,"do not export medium\n"); 
+    fprintf(stdout,"do not export medium\n"); 
   }
 
 //-------------------------------------------------------------------------------
@@ -384,8 +374,7 @@ int main(int argc, char** argv)
                        par->source_input_file,
                        t0, dt,
                        fd->num_rk_stages, fd->rk_rhs_time,
-                       fd->fdx_max_half_len,
-                       verbose);
+                       fd->fdx_max_half_len);
 
   /*
   if (par->is_export_source==1)
@@ -398,7 +387,7 @@ int main(int argc, char** argv)
 //-- allocate main var
 //-------------------------------------------------------------------------------
 
-  if (verbose>0) fprintf(stdout,"allocate solver vars ...\n"); 
+  fprintf(stdout,"allocate solver vars ...\n"); 
   if (md->medium_type == CONST_MEDIUM_ACOUSTIC_ISO)
   {
     wav_ac_init(gd, wav, fd->num_rk_stages);
@@ -411,7 +400,7 @@ int main(int argc, char** argv)
 //-- setup output, may require coord info
 //-------------------------------------------------------------------------------
 
-  if (verbose>0) fprintf(stdout,"setup output info ...\n"); 
+  fprintf(stdout,"setup output info ...\n"); 
 
   // receiver: need to do
   io_recv_read_locate(gd, iorecv,
@@ -445,7 +434,7 @@ int main(int argc, char** argv)
 //-- setup boundary
 //-------------------------------------------------------------------------------
 
-  if (verbose>0) fprintf(stdout,"setup boundary ...\n"); 
+  fprintf(stdout,"setup boundary ...\n"); 
 
   bdry_init(bdry, gd->nx, gd->nz);
 
@@ -453,38 +442,36 @@ int main(int argc, char** argv)
   
   if (par->bdry_has_cfspml == 1)
   {
-    if (verbose>0) fprintf(stdout,"setup ade cfs-pml ...\n"); 
+    fprintf(stdout,"setup ade cfs-pml ...\n"); 
 
     bdry_pml_set(gd, wav, bdry,
                  par->cfspml_is_sides,
                  par->abs_num_of_layers,
                  par->cfspml_alpha_max,
                  par->cfspml_beta_max,
-                 par->cfspml_velocity,
-                 verbose);
+                 par->cfspml_velocity);
   }
 
   //-- ablexp
   
   if (par->bdry_has_ablexp == 1)
   {
-    if (verbose>0) fprintf(stdout,"setup sponge layer ...\n"); 
+    fprintf(stdout,"setup sponge layer ...\n"); 
 
     bdry_ablexp_set(gd, wav, bdry,
                     par->ablexp_is_sides,
                     par->abs_num_of_layers,
                     par->ablexp_velocity,
-                    dt,
-                    verbose);
+                    dt);
   }
 
   //-- free surface preproc
 
   if (par->bdry_has_free == 1)
   {
-    if (verbose>0) fprintf(stdout,"cal free surface matrix ...\n"); 
+    fprintf(stdout,"cal free surface matrix ...\n"); 
 
-    bdry_free_set(gd, bdry, par->free_is_sides, par->visco_itype, verbose);
+    bdry_free_set(gd, bdry, par->free_is_sides, par->visco_itype);
   }
 
 //-------------------------------------------------------------------------------
@@ -506,7 +493,7 @@ int main(int argc, char** argv)
   // convert rho to 1 / rho to reduce number of arithmetic cal
   md_rho_to_slow(md->rho, md->siz_icmp);
 
-  if (verbose>0) fprintf(stdout,"start solver ...\n"); 
+  fprintf(stdout,"start solver ...\n"); 
   
   time_t t_start = time(NULL);
   
@@ -517,14 +504,11 @@ int main(int argc, char** argv)
                           dt,nt_total,t0,
                           blk->output_dir,
                           par->check_nan_every_nummber_of_steps,
-                          par->output_all,
-                          verbose);
+                          par->output_all);
   
   time_t t_end = time(NULL);
   
-  if (verbose>0) {
-    fprintf(stdout,"\n\nRuning Time of time :%f s \n", difftime(t_end,t_start));
-  }
+  fprintf(stdout,"\n\nRuning Time of time :%f s \n", difftime(t_end,t_start));
 
 //-------------------------------------------------------------------------------
 //-- save station and line seismo to sac

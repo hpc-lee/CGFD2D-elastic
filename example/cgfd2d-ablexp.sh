@@ -174,7 +174,7 @@ cat << ieof > ${PROJDIR}/cgfd_sim.sh
 set -e
 
 printf "\nStart simualtion ...\n";
-time $EXEC_WAVE $PAR_FILE 100 3 2>&1 |tee log3
+time $EXEC_WAVE $PAR_FILE  2>&1 |tee log3
 if [ $? -ne 0 ]; then
     printf "\nSimulation fail! stop!\n"
     exit 1

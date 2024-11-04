@@ -1188,8 +1188,7 @@ gd_indx_set(gd_t *const gd,
             const int number_of_total_grid_points_x,
             const int number_of_total_grid_points_z,
             const int fdx_nghosts,
-            const int fdz_nghosts,
-            const int verbose)
+            const int fdz_nghosts)
 {
   int ierr = 0;
 

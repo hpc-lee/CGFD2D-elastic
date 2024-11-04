@@ -30,8 +30,7 @@ sv_curv_col_vis_iso_onestage(
                   // include different order/stentil
                   int num_of_fdx_op, fd_op_t *fdx_op,
                   int num_of_fdz_op, fd_op_t *fdz_op,
-                  int fdz_max_len, 
-                  const int verbose)
+                  int fdz_max_len) 
 {
   // local pointer get each vars
   float *restrict Vx    = w_cur + wav->Vx_pos ;
@@ -116,8 +115,7 @@ sv_curv_col_vis_iso_onestage(
                                lam2d, mu2d, slw2d,
                                ni1,ni2,nk1,nk2,siz_iz,
                                fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
-                               fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
-                               verbose);
+                               fdz_inn_len, fdz_inn_indx, fdz_inn_coef);
 
   // free, abs, source in turn
   // free surface at z2
@@ -129,8 +127,7 @@ sv_curv_col_vis_iso_onestage(
                                jac2d, slw2d,
                                ni1,ni2,nk1,nk2,siz_iz,
                                fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
-                               fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
-                               verbose);
+                               fdz_inn_len, fdz_inn_indx, fdz_inn_coef);
 
     // velocity: vlow
     sv_curv_col_el_iso_rhs_vlow_z2(Vx,Vz,hTxx,hTzz,hTxz,
@@ -139,8 +136,7 @@ sv_curv_col_vis_iso_onestage(
                                    vecVx2Vz,
                                    ni1,ni2,nk1,nk2,siz_iz,
                                    fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
-                                   num_of_fdz_op,fdz_op,fdz_max_len,
-                                   verbose);
+                                   num_of_fdz_op,fdz_op,fdz_max_len);
   }
 
 // cfs-pml, loop face inside
@@ -153,8 +149,7 @@ sv_curv_col_vis_iso_onestage(
                                   nk2, siz_iz,
                                   fdx_inn_len, fdx_inn_indx, fdx_inn_coef,
                                   fdz_inn_len, fdz_inn_indx, fdz_inn_coef,
-                                  bdry,
-                                  verbose);
+                                  bdry);
     
   }
 
@@ -164,16 +159,14 @@ sv_curv_col_vis_iso_onestage(
                             hJxx,hJzz,hJxz,
                             lam2d, mu2d, slw2d,
                             wl,Ylam,Ymu,
-                            ni1,ni2,nk1,nk2,siz_iz,nmaxwell,
-                            verbose);
+                            ni1,ni2,nk1,nk2,siz_iz,nmaxwell);
 
   // add source term
   if (src->total_number > 0)
   {
     sv_curv_col_el_rhs_src(hVx,hVz,hTxx,hTzz,hTxz,
                            jac2d, slw2d, 
-                           src,
-                           verbose);
+                           src);
   }
   // end func
 
@@ -190,8 +183,7 @@ sv_curv_col_vis_iso_atten(
            float **restrict hJxx, float **restrict hJzz, float **restrict hJxz,
            float *restrict lam2d, float *restrict mu2d, float *restrict slw2d,
            float *restrict wl, float **restrict Ylam, float **restrict Ymu,
-           int ni1, int ni2, int nk1, int nk2, size_t siz_iz, int nmaxwell,
-           const int verbose)
+           int ni1, int ni2, int nk1, int nk2, size_t siz_iz, int nmaxwell)
 {
   float lam,mu;
   float mem_Txx,mem_Tzz,mem_Txz;
@@ -255,8 +247,7 @@ int
 sv_curv_col_vis_iso_dvh2dvz(gd_t        *gd,
                             gd_metric_t *metric,
                             md_t        *md,
-                            bdry_t      *bdry,
-                            const int verbose)
+                            bdry_t      *bdry)
 {
   int ierr = 0;
 
@@ -338,8 +329,7 @@ sv_curv_col_vis_iso_free(float *restrict w_end,
                          gd_t   *gd,
                          gd_metric_t  *metric,
                          md_t *md,
-                         bdry_t      *bdryfree, 
-                         const int verbose)
+                         bdry_t      *bdryfree) 
 {
   int ierr;
 

@@ -26,8 +26,7 @@ sv_curv_col_el_vti_onestage(
                // include different order/stentil
                int num_of_fdx_op, fd_op_t *fdx_op,
                int num_of_fdz_op, fd_op_t *fdz_op,
-               int fdz_max_len, 
-               const int verbose);
+               int fdz_max_len);
 
 int
 sv_curv_col_el_vti_rhs_inner(
@@ -45,8 +44,7 @@ sv_curv_col_el_vti_rhs_inner(
                int ni1, int ni2, int nk1, int nk2,
                size_t siz_iz,
                int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
-               int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef,
-               const int verbose);
+               int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef);
 
 int
 sv_curv_col_el_vti_rhs_vlow_z2(
@@ -62,8 +60,7 @@ sv_curv_col_el_vti_rhs_vlow_z2(
                int ni1, int ni2, int nk1, int nk2,
                size_t siz_iz,
                int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
-               int num_of_fdz_op, fd_op_t *fdz_op, int fdz_max_len,
-               const int verbose);
+               int num_of_fdz_op, fd_op_t *fdz_op, int fdz_max_len);
 
 int
 sv_curv_col_el_vti_rhs_cfspml(
@@ -81,14 +78,12 @@ sv_curv_col_el_vti_rhs_cfspml(
                int nk2, size_t siz_iz,
                int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
                int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef,
-               bdry_t *bdry,
-               const int verbose);
+               bdry_t *bdry);
 
 int
 sv_curv_col_el_vti_dvh2dvz(gd_t        *gd,
                            gd_metric_t *metric,
                            md_t       *md,
-                           bdry_t     *bdry,
-                           const int verbose);
+                           bdry_t     *bdry);
 
 #endif

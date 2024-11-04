@@ -20,8 +20,7 @@ sv_curv_col_el_rhs_timg_z2(
              int ni1, int ni2, int nk1, int nk2,
              size_t siz_iz,
              int fdx_len, int *restrict fdx_indx, float *restrict fdx_coef,
-             int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef,
-             const int verbose);
+             int fdz_len, int *restrict fdz_indx, float *restrict fdz_coef);
 
 int
 sv_curv_col_el_rhs_src(
@@ -29,8 +28,7 @@ sv_curv_col_el_rhs_src(
              float *restrict hTxx, float *restrict hTzz,
              float *restrict hTxz, 
              float *restrict jac2d, float *restrict slw2d,
-             src_t *src, // short nation for reference member
-             const int verbose);
+             src_t *src);
 
 int
 sv_curv_graves_Qs(float *w, int ncmp, float dt, gd_t *gd, md_t *md);

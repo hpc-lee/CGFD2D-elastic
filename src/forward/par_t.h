@@ -165,7 +165,7 @@ typedef struct{
 } par_t;
 
 int
-par_read_from_file(char *par_fname, par_t *par, int verbose);
+par_read_from_file(char *par_fname, par_t *par);
 
 int 
 par_read_from_str(const char *str, par_t *par);
