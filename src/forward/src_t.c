@@ -632,7 +632,7 @@ fun_ricker_deriv(float t, float fc, float t0)
   //float u = (t-t0)*2.0*PI*fc;
   //float v = u*(1.5-u*u/4)*exp(-u*u/4)*f0*PI*fc;
   float u = (t-t0)*2.0*PI*fc;
-  float v = u*(-3+1/2*u*u)*exp(-u*u/4)*PI*fc;
+  float v = u*(-3+1.0/2.0*u*u)*exp(-u*u/4)*PI*fc;
 
   return v;
 }
